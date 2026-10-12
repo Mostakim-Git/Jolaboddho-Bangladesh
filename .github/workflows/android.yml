@@ -10,21 +10,22 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
-      - uses: android-actions/setup-android@v3
-      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Use the runner's preinstalled Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0' > sdk-setup.log 2>&1 || { tail -n 25 sdk-setup.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
       - run: npm ci
       - run: npm test
       - run: npm run icons
@@ -34,7 +35,9 @@ jobs:
       - run: npx cap sync android
       - name: Build installable debug APK and lint Android app
         working-directory: android
-        run: chmod +x gradlew && ./gradlew :app:assembleDebug :app:lintDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:lintDebug --no-daemon > gradle-build.log 2>&1 || { tail -n 45 gradle-build.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: jolabaddho-debug-apk
