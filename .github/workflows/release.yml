@@ -150,12 +150,36 @@ jobs:
 
           This is an independent citizen tool, not a government reporting portal or an official flood-warning service. See [\`docs/VERIFICATION.md\`](https://github.com/${{ github.repository }}/blob/main/docs/VERIFICATION.md) for exactly what is and is not verified.
           EOF
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$APK_PATH" "$APK_PATH.sha256" --clobber
+          # gh attaches assets while the release is still a draft and only then
+          # publishes it, so an interrupted upload leaves a draft behind. Look
+          # for an existing release (draft or published) before creating one, so
+          # a retry reuses it instead of failing on the duplicate tag.
+          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -qx "$TAG"; then
+            echo "Release $TAG already exists; reusing it."
           else
-            gh release create "$TAG" "$APK_PATH" "$APK_PATH.sha256" \
+            gh release create "$TAG" \
               --title "Jolabaddho? ${TAG}" \
               --notes-file "$RUNNER_TEMP/release-notes.md" \
-              --verify-tag
+              --verify-tag \
+              --draft
           fi
+
+          # An asset upload can fail on a transient network error; retry before
+          # giving up, and surface the failure as an annotation if it persists.
+          for attempt in 1 2 3; do
+            if gh release upload "$TAG" "$APK_PATH" "$APK_PATH.sha256" --clobber; then
+              break
+            fi
+            if [[ "$attempt" == 3 ]]; then
+              echo "::error::Could not upload the release assets for $TAG after 3 attempts."
+              exit 1
+            fi
+            echo "::warning::Asset upload attempt $attempt failed; retrying."
+            sleep $((attempt * 15))
+          done
+
+          gh release edit "$TAG" \
+            --title "Jolabaddho? ${TAG}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --draft=false
           echo "### Released $TAG ($BUILD_KIND build)" >> "$GITHUB_STEP_SUMMARY"
