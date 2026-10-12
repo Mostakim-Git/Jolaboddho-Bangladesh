@@ -5,7 +5,10 @@ import { Clipboard } from "@capacitor/clipboard";
 import { Share } from "@capacitor/share";
 import { Preferences } from "@capacitor/preferences";
 import { App } from "@capacitor/app";
-import { normalizeBackendUrl } from "../shared/backend-url";
+import {
+  normalizeBackendUrl,
+  DEFAULT_BACKEND_ORIGIN,
+} from "../shared/backend-url";
 export const isNative = Capacitor.isNativePlatform();
 const EmailComposer = registerPlugin("EmailComposer");
 let backend = "";
@@ -13,10 +16,16 @@ let initialized;
 export async function loadBackend() {
   if (!initialized)
     initialized = (async () => {
+      // Native builds need an absolute origin because the WebView is served from
+      // https://localhost. The installed app therefore falls back to the deployed
+      // backend so it works without setup. The web build keeps a same-origin
+      // relative path when nothing is configured, so the dev proxy still works.
       let configured = import.meta.env.VITE_API_BASE_URL || "";
       if (isNative)
         configured =
-          (await Preferences.get({ key: "backendOrigin" })).value || configured;
+          (await Preferences.get({ key: "backendOrigin" })).value ||
+          configured ||
+          DEFAULT_BACKEND_ORIGIN;
       try {
         backend = normalizeBackendUrl(configured);
       } catch {
@@ -40,7 +49,7 @@ export async function apiEndpoint(path) {
   const origin = await loadBackend();
   if (isNative && !origin)
     throw new Error(
-      "Connect your trusted HTTPS backend in Service settings. Never enter a Gemini API key into the app. Demo and weather do not need a backend.",
+      "No AI service is connected. Set a trusted HTTPS backend in Service settings. Never enter a Gemini API key into the app.",
     );
   return `${origin}${path}`;
 }

@@ -6,7 +6,10 @@ import {
   complaintMailto,
   contactIsStale,
 } from "../shared/contacts.js";
-import { normalizeBackendUrl } from "../shared/backend-url.js";
+import {
+  normalizeBackendUrl,
+  DEFAULT_BACKEND_ORIGIN,
+} from "../shared/backend-url.js";
 const directory = JSON.parse(
   readFileSync(new URL("../data/authorities.json", import.meta.url)),
 );
@@ -63,4 +66,14 @@ test("native backend accepts only a non-secret public HTTPS origin", () => {
     "not a url",
   ])
     assert.throws(() => normalizeBackendUrl(url));
+});
+test("the baked-in default backend is a valid public HTTPS origin", () => {
+  // The installed Android app falls back to this constant, so a typo here would
+  // silently break every AI request. It must survive the same validation the
+  // Service settings input uses, and it must never carry a secret.
+  assert.equal(
+    normalizeBackendUrl(DEFAULT_BACKEND_ORIGIN),
+    "https://jolabaddho-waterlogging-reporter.ai.studio",
+  );
+  assert.doesNotMatch(DEFAULT_BACKEND_ORIGIN, /key|token|secret/i);
 });

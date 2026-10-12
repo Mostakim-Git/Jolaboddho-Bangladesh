@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Settings, Check, LoaderCircle } from "lucide-react";
 import { loadBackend, saveBackend, apiEndpoint, isNative } from "./platform";
+import { DEFAULT_BACKEND_ORIGIN } from "../shared/backend-url";
 export default function ServiceSettings() {
   const [url, setUrl] = useState(""),
     [message, setMessage] = useState(""),
@@ -55,14 +56,14 @@ export default function ServiceSettings() {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://your-deployed-backend.example"
+            placeholder={DEFAULT_BACKEND_ORIGIN}
             autoComplete="off"
             spellCheck={false}
           />
         </label>
         <p className="micro">
           {isNative
-            ? "Only this non-secret URL is saved on your device. Reports remain in memory."
+            ? `Only this non-secret URL is saved on your device. Reports remain in memory. The app already uses ${DEFAULT_BACKEND_ORIGIN}; change it only if your server moves.`
             : "Leave blank to use this website’s same-origin backend. Changes last until refresh."}
         </p>
         <button className="button secondary" disabled={busy} type="submit">

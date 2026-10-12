@@ -48,7 +48,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export async function gemini(parts, json = false) {
   if (!process.env.GEMINI_API_KEY) {
     const e = new Error(
-      "Gemini is not configured yet. Add GEMINI_API_KEY on the server, or explore the demo.",
+      "Gemini is not configured yet. Add GEMINI_API_KEY on the server, then try again.",
     );
     e.status = 503;
     throw e;

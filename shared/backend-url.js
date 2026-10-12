@@ -1,3 +1,9 @@
+// Public, non-secret origin of the deployed Jolabaddho backend. Never put an API
+// key here. The installed Android app falls back to this so a citizen can open
+// the app and use it without configuring anything first.
+export const DEFAULT_BACKEND_ORIGIN =
+  "https://jolabaddho-waterlogging-reporter.ai.studio";
+
 // Backend URLs are public configuration, never API keys. Require an HTTPS origin
 // so images cannot accidentally be sent over cleartext or to a localhost service.
 export function normalizeBackendUrl(value) {

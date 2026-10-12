@@ -56,7 +56,7 @@ test("analysis route rejects invalid inputs", async () => {
   assert.equal(r.status, 400);
   assert.match((await r.json()).error, /invalid or missing/);
 });
-test("analysis without a configured key fails honestly, not with demo results", async () => {
+test("analysis without a configured key fails honestly instead of inventing a result", async () => {
   const r = await post("/api/analyze", {
     image: "aGVsbG8gdGVzdCBpbWFnZQ==",
     mimeType: "image/jpeg",
@@ -64,7 +64,7 @@ test("analysis without a configured key fails honestly, not with demo results", 
   assert.equal(r.status, 503);
   assert.match((await r.json()).error, /Gemini is not configured/);
 });
-test("complaint rejects sample weather as live evidence", async () => {
+test("complaint accepts only live weather, never a non-live source", async () => {
   const r = await post("/api/complaint", {
     analysis: {
       problem_type: "blocked_drain",

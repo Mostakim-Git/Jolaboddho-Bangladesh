@@ -9,7 +9,7 @@ def releaseKeystoreAvailable = releaseKeystorePath && file(releaseKeystorePath).
 // Resolve the version metadata here: a bare "versionCode (expr).toInteger()" inside
 // the android block parses as a call chain on versionCode's own return value.
 def ciVersionCode = (System.getenv("JOLABADDHO_VERSION_CODE") ?: "2").toInteger()
-def ciVersionName = System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.1.0"
+def ciVersionName = System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.2.0"
 
 android {
     namespace "bd.jolabaddho.app"
