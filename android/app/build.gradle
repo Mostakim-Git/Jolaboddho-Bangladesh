@@ -6,6 +6,11 @@ apply plugin: 'com.android.application'
 def releaseKeystorePath = System.getenv("JOLABADDHO_KEYSTORE_PATH")
 def releaseKeystoreAvailable = releaseKeystorePath && file(releaseKeystorePath).exists()
 
+// Resolve the version metadata here: a bare "versionCode (expr).toInteger()" inside
+// the android block parses as a call chain on versionCode's own return value.
+def ciVersionCode = (System.getenv("JOLABADDHO_VERSION_CODE") ?: "2").toInteger()
+def ciVersionName = System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.1.0"
+
 android {
     namespace "bd.jolabaddho.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -14,8 +19,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Tagged release builds pass the matching version in; local builds use the default.
-        versionCode (System.getenv("JOLABADDHO_VERSION_CODE") ?: "2").toInteger()
-        versionName System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.1.0"
+        versionCode ciVersionCode
+        versionName ciVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -24,8 +29,10 @@ android {
         }
     }
     signingConfigs {
-        release {
-            if (releaseKeystoreAvailable) {
+        // Created only when a keystore exists: an empty release config would be an
+        // incomplete signing configuration that newer AGP versions reject.
+        if (releaseKeystoreAvailable) {
+            release {
                 storeFile file(releaseKeystorePath)
                 storePassword System.getenv("JOLABADDHO_KEYSTORE_PASSWORD")
                 keyAlias System.getenv("JOLABADDHO_KEY_ALIAS")
