@@ -10,9 +10,9 @@ Help residents of Bangladeshi cities report drainage problems before heavy rain.
 
 | Screen    | Citizen action                                            | App output                                                                                                                                   |
 | --------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Home      | Report a problem                                          | Purpose, big report button, optional labeled demo                                                                                            |
+| Home      | Report a problem                                          | Purpose, big report button                                                                                                                   |
 | Photo     | Camera/gallery upload, preview/remove, Analyze            | EXIF-aware JPEG ≤1024 px, validated Gemini assessment                                                                                        |
-| Location  | GPS, map pin/coordinates, or demo coordinate; verify area | Coordinates/name and a live forecast request for that spot                                                                                   |
+| Location  | GPS or map pin/coordinates; verify area                   | Coordinates/name and a live forecast request for that spot                                                                                   |
 | Result    | Review diagnosis and forecast                             | Problem, evidence, confidence, affects; location; 24h precipitation/chart; fetched-at label; LOW/MEDIUM/HIGH score with reasons; SDG 6/11/13 |
 | Complaint | Choose/verify authority, generate, edit, Copy/Share/Email | Formal Bangla draft using known facts, date, peak hour and blank name/phone; citizen sends it                                                |
 
@@ -28,9 +28,9 @@ Code adds the four components in the guide's Brick 7 table. Total 0–3 LOW, 4�
 
 ## In / out
 
-**In:** five-screen portrait flow, camera/upload, Gemini analysis and drafting, location, live forecast, deterministic risk, source labels, clear loading/errors, edit/copy/share/email, verification hints, in-memory demo, English headings + Bangla subtitles.
+**In:** five-screen portrait flow, camera/upload, Gemini analysis and drafting, location, live forecast, deterministic risk, source labels, clear loading/errors, edit/copy/share/email, verification hints, in-memory report state, English headings + Bangla subtitles.
 
-**Out:** login/accounts, persistent reports/database, payments, government submission, guessed ward/contact information, drainage network maps, automatic publishing, official flood prediction. English/Bangla heading toggle and voice readout remain optional stretch items, not implemented.
+**Out:** login/accounts, demo or sample-report mode, template letters, persistent reports/database, payments, government submission, guessed ward/contact information, drainage network maps, automatic publishing, official flood prediction. English/Bangla heading toggle and voice readout remain optional stretch items, not implemented.
 
 ## Trust and success gates
 

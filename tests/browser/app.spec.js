@@ -1,4 +1,7 @@
 import { test, expect } from "@playwright/test";
+// Shared mock payloads. Every AI/weather success in this file is mocked: these
+// tests prove the app wires real requests together, not that any model is
+// accurate. There is no demo or sample-report path left to fall back on.
 const assessment = {
   problem_type: "blocked_drain",
   severity: 4,
@@ -6,16 +9,19 @@ const assessment = {
   confidence: 0.9,
   affects: ["pedestrians"],
 };
-const weatherData = () => ({
+const rainSeries = (mm = 1.5, probability = 85) => ({
   hourly: {
     time: Array.from(
       { length: 48 },
       (_, i) => Math.floor(Date.now() / 3600000) * 3600 + i * 3600,
     ),
-    precipitation: Array(48).fill(1.5),
-    precipitation_probability: Array(48).fill(85),
+    precipitation: Array(48).fill(mm),
+    precipitation_probability: Array(48).fill(probability),
   },
 });
+// 24 bins of 1.5 mm = 36 mm total, 85% peak probability: MEDIUM 4/10 with a
+// "none" photo, HIGH 7/10 with a severity-4 blocked drain.
+const weatherData = () => rainSeries();
 async function navigate(page, name) {
   await page
     .getByRole("navigation", { name: "Report screens", exact: true })
@@ -43,17 +49,49 @@ async function uploadPhoto(page, width = 64, height = 64) {
       buffer: Buffer.from(dataURL.split(",")[1], "base64"),
     });
 }
-async function enterDemoComplaint(page) {
-  await page.getByRole("button", { name: "Try demo", exact: true }).click();
+// Enter a location the way a citizen must: a real pin with real coordinates.
+// There is no sample location button in the shipped app.
+async function pinLocation(page, lat = 23.8103, lng = 90.4125) {
+  await page.getByRole("button", { name: "Place a pin", exact: true }).click();
+  await page.getByLabel("Latitude", { exact: true }).fill(String(lat));
+  await page.getByLabel("Longitude", { exact: true }).fill(String(lng));
+  await page.getByRole("button", { name: "Confirm location" }).click();
+}
+function mockServices(page, { complaint } = {}) {
+  const routes = [
+    page.route("**/api/analyze", (r) => r.fulfill({ json: assessment })),
+    page.route("https://api.open-meteo.com/**", (r) =>
+      r.fulfill({ json: weatherData() }),
+    ),
+    page.route("**/api/complaint", async (r) => {
+      if (complaint) return complaint(r);
+      await r.fulfill({
+        json: {
+          text: "বরাবর\nসিটি কর্পোরেশন\nনাম: __________\nফোন: __________",
+          source: "Gemini",
+        },
+      });
+    }),
+  ];
+  return Promise.all(routes);
+}
+// Drive the complete real flow: photo -> analyze -> pin -> forecast -> complaint.
+async function enterComplaint(page, options) {
+  await mockServices(page, options);
+  await page.goto("/#photo");
+  await uploadPhoto(page);
+  await page.getByRole("button", { name: "Analyze photo with Gemini" }).click();
+  await expect(page.getByText("Photo assessed", { exact: true })).toBeVisible();
+  await navigate(page, "Location");
+  await pinLocation(page);
+  await navigate(page, "Result");
   await page
     .getByRole("button", { name: "Prepare complaint", exact: true })
     .click();
   await page
     .getByLabel("Addressed to")
     .selectOption("ঢাকা উত্তর সিটি কর্পোরেশন");
-  await page
-    .getByRole("button", { name: "Create demo complaint", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Draft my complaint" }).click();
 }
 test("five screens navigate forward/back without losing state or overflowing", async ({
   page,
@@ -108,66 +146,43 @@ test("five screens navigate forward/back without losing state or overflowing", a
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
-test("demo includes exact 8/10 score, date, peak hour, editable draft, and invalidation", async ({
+test("the shipped app offers no demo, sample report or template letter", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Try demo", exact: true }).click();
+  await expect(page.getByRole("button", { name: /demo/i })).toHaveCount(0);
+  await expect(page.getByText(/sample report/i)).toHaveCount(0);
+  await expect(page.getByText(/You’re exploring a demo/i)).toHaveCount(0);
+  await navigate(page, "Photo");
+  await expect(page.getByText(/Illustrative sample/i)).toHaveCount(0);
+  await expect(page.getByText(/Try a sample/i)).toHaveCount(0);
+  await navigate(page, "Location");
   await expect(
-    page.getByText("HIGH RISK · 8/10", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Demo data · illustrative, not a live forecast", {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Sustainable Development Goals")).toContainText(
-    "SDG 13",
-  );
-  await page
-    .getByRole("button", { name: "Prepare complaint", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Create demo complaint", exact: true })
-    .click();
-  const letter = page.getByLabel("Edit your Bangla complaint");
-  await expect(letter).toContainText("তারিখ:");
-  await expect(letter).toContainText("নাম:");
-  await expect(letter).toContainText("সর্বোচ্চ ঘণ্টাভিত্তিক বৃষ্টি");
-  await letter.fill("");
-  await expect(letter).toBeVisible();
-  await letter.fill("পরীক্ষিত খসড়া");
-  await page
-    .getByLabel("Addressed to")
-    .selectOption("ঢাকা উত্তর সিটি কর্পোরেশন");
-  await expect(letter).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Create demo complaint", exact: true })
-    .click();
-  await expect(letter).toContainText("ঢাকা উত্তর সিটি কর্পোরেশন");
-  await page
-    .getByRole("button", { name: "Start a real report", exact: true })
-    .click();
+    page.getByRole("button", { name: /demo location/i }),
+  ).toHaveCount(0);
   await navigate(page, "Result");
-  await expect(page.getByText(/HIGH RISK/)).toHaveCount(0);
+  await expect(page.getByText(/Demo outlook/i)).toHaveCount(0);
+  await expect(page.getByText(/Sample forecast/i)).toHaveCount(0);
   await navigate(page, "Complaint");
   await expect(
-    page.getByRole("button", { name: "Draft my complaint" }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: /demo complaint/i }),
+  ).toHaveCount(0);
 });
-test("full photo/location/live precipitation/risk/AI complaint flow with mocked services", async ({
+test("no forecast renders invented rainfall bars before data loads", async ({
   page,
 }) => {
-  await page.route("**/api/analyze", (r) => r.fulfill({ json: assessment }));
-  await page.route("https://api.open-meteo.com/**", (r) => {
-    const url = new URL(r.request().url());
-    expect(url.searchParams.get("hourly")).toBe(
-      "precipitation,precipitation_probability",
-    );
-    expect(url.searchParams.get("daily")).toBe("precipitation_sum");
-    expect(url.searchParams.get("forecast_days")).toBe("2");
-    return r.fulfill({ json: weatherData() });
-  });
+  await page.goto("/#result");
+  // The chart must be empty rather than showing placeholder rainfall bars.
+  await expect(page.locator(".rain-chart > div")).toHaveCount(0);
+  await expect(page.locator(".rain-number")).toContainText("—");
+  await expect(
+    page.getByText("Awaiting location", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".weather-metrics")).toContainText("—");
+});
+test("real photo/location/forecast/risk flow scores 7/10 and drafts a letter", async ({
+  page,
+}) => {
   await page.route("**/api/complaint", async (r) => {
     const facts = r.request().postDataJSON();
     expect(facts.weather.source).toBe("live");
@@ -181,20 +196,26 @@ test("full photo/location/live precipitation/risk/AI complaint flow with mocked 
       },
     });
   });
+  await page.route("**/api/analyze", (r) => r.fulfill({ json: assessment }));
+  await page.route("https://api.open-meteo.com/**", (r) => {
+    const url = new URL(r.request().url());
+    expect(url.searchParams.get("hourly")).toBe(
+      "precipitation,precipitation_probability",
+    );
+    expect(url.searchParams.get("daily")).toBe("precipitation_sum");
+    expect(url.searchParams.get("forecast_days")).toBe("2");
+    return r.fulfill({ json: weatherData() });
+  });
   await page.goto("/#photo");
   await uploadPhoto(page);
   await page.getByRole("button", { name: "Analyze photo with Gemini" }).click();
   await expect(page.getByText("Photo assessed", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "Choose location", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Use demo location", exact: true })
-    .click();
+  await navigate(page, "Location");
+  await pinLocation(page);
   await page
     .getByLabel("Area name (optional; enter what you know)")
     .fill("My verified street");
-  await page.getByRole("button", { name: "View result", exact: true }).click();
+  await navigate(page, "Result");
   await expect(
     page.getByText(/Live data: Open-Meteo, fetched at/),
   ).toBeVisible();
@@ -217,14 +238,25 @@ test("full photo/location/live precipitation/risk/AI complaint flow with mocked 
     page.getByText("AI-assisted draft · Gemini", { exact: true }),
   ).toBeVisible();
 });
-test("weather failure has retry and does not substitute demo data", async ({
+test("editing the letter survives, and changing authority invalidates it", async ({
   page,
 }) => {
+  await page.goto("/");
+  await enterComplaint(page);
+  const letter = page.getByLabel("Edit your Bangla complaint");
+  await expect(letter).toContainText("নাম:");
+  await letter.fill("পরীক্ষিত খসড়া");
+  await expect(letter).toHaveValue("পরীক্ষিত খসড়া");
+  await expect(page.getByLabel("Sustainable Development Goals")).toContainText(
+    "SDG 13",
+  );
+  await page.getByLabel("Addressed to").selectOption("other");
+  await expect(letter).toHaveCount(0);
+});
+test("weather failure has retry and substitutes no data", async ({ page }) => {
   await page.route("https://api.open-meteo.com/**", (r) => r.abort());
   await page.goto("/#location");
-  await page
-    .getByRole("button", { name: "Use demo location", exact: true })
-    .click();
+  await pinLocation(page);
   await navigate(page, "Result");
   await expect(page.getByRole("alert")).toContainText(
     "Could not reach Open-Meteo",
@@ -232,9 +264,8 @@ test("weather failure has retry and does not substitute demo data", async ({
   await expect(
     page.getByRole("button", { name: "Retry live forecast" }),
   ).toBeVisible();
-  await expect(page.getByText("Sample forecast", { exact: true })).toHaveCount(
-    0,
-  );
+  await expect(page.getByText(/Sample forecast/i)).toHaveCount(0);
+  await expect(page.locator(".rain-chart > div")).toHaveCount(0);
 });
 test("manual pin/coordinates work without map tiles and appear on Result", async ({
   page,
@@ -299,7 +330,7 @@ test("unsupported photo and missing Gemini key show friendly messages", async ({
       status: 503,
       json: {
         error:
-          "Gemini is not configured yet. Add GEMINI_API_KEY on the server, or explore the demo.",
+          "Gemini is not configured yet. Add GEMINI_API_KEY on the server, then try again.",
       },
     }),
   );
@@ -347,7 +378,7 @@ test("copy, share, email preserve the edited Bangla text and do not invent a rec
       value: undefined,
     });
   });
-  await enterDemoComplaint(page);
+  await enterComplaint(page);
   await page
     .getByLabel("Edit your Bangla complaint")
     .fill("আমার যাচাইকৃত অভিযোগ");
@@ -383,45 +414,52 @@ test("copy, share, email preserve the edited Bangla text and do not invent a rec
     "আমার যাচাইকৃত অভিযোগ",
   );
 });
-test("Other authority requires a name and appears in the demo salutation", async ({
+test("Other authority requires a name and is passed to the server", async ({
   page,
 }) => {
+  let received;
   await page.goto("/");
-  await enterDemoComplaint(page);
+  await enterComplaint(page, {
+    complaint: async (r) => {
+      received = r.request().postDataJSON();
+      await r.fulfill({ json: { text: "খসড়া", source: "Gemini" } });
+    },
+  });
   await page.getByLabel("Addressed to").selectOption("other");
   await expect(
-    page.getByRole("button", { name: "Create demo complaint" }),
+    page.getByRole("button", { name: "Draft my complaint" }),
   ).toBeDisabled();
   await page.getByLabel("Authority / office name").fill("সাভার পৌরসভা");
-  await page.getByRole("button", { name: "Create demo complaint" }).click();
-  await expect(page.getByLabel("Edit your Bangla complaint")).toContainText(
-    "সাভার পৌরসভা",
-  );
+  await page.getByRole("button", { name: "Draft my complaint" }).click();
+  expect(received.authority).toBe("সাভার পৌরসভা");
 });
-test("an older weather response cannot overwrite a new demo report", async ({
+test("an older weather response cannot overwrite a newer location's report", async ({
   page,
 }) => {
-  let received, pending;
-  const arrived = new Promise((resolve) => (received = resolve));
-  await page.route("https://api.open-meteo.com/**", (r) => {
-    pending = r;
-    received();
+  let calls = 0;
+  let releaseStale;
+  // The first (stale) forecast is held open; the second lands immediately with
+  // different numbers, so the assertions can tell which one is on screen.
+  await page.route("https://api.open-meteo.com/**", async (r) => {
+    calls++;
+    if (calls === 1) {
+      releaseStale = () => r.fulfill({ json: rainSeries(9, 95) });
+      return;
+    }
+    await r.fulfill({ json: rainSeries(1.5, 85) });
   });
   await page.goto("/#location");
-  await page
-    .getByRole("button", { name: "Use demo location", exact: true })
-    .click();
-  await arrived;
-  await page.getByRole("button", { name: "Try demo", exact: true }).click();
-  await pending.fulfill({ json: weatherData() });
-  await expect(
-    page.getByText("Demo data · illustrative, not a live forecast", {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(page.getByText(/Live data: Open-Meteo, fetched at/)).toHaveCount(
-    0,
-  );
+  await pinLocation(page, 23.8103, 90.4125);
+  // A second, newer location supersedes the still-pending forecast request.
+  await pinLocation(page, 22.3569, 91.7832);
+  await navigate(page, "Result");
+  await expect(page.locator(".rain-number")).toContainText("36.0");
+  await expect(page.locator(".weather-metrics")).toContainText("85");
+  // Now let the stale response arrive late. It must be ignored.
+  releaseStale();
+  await expect(page.locator(".rain-number")).toContainText("36.0");
+  await expect(page.locator(".rain-number")).not.toContainText("216.0");
+  await expect(page.locator(".weather-metrics")).not.toContainText("95");
 });
 test("large image is resized to max 1024 px; EXIF rotation is respected", async ({
   page,
@@ -501,9 +539,7 @@ test("confident dry-street result is friendly and uses zero photo points", async
     page.getByText(/No drainage or flooding problem is visible/),
   ).toBeVisible();
   await navigate(page, "Location");
-  await page
-    .getByRole("button", { name: "Use demo location", exact: true })
-    .click();
+  await pinLocation(page);
   await navigate(page, "Result");
   await expect(
     page.getByText("MEDIUM RISK · 4/10", { exact: true }),
@@ -515,7 +551,7 @@ test("recipient directory follows authority, requires confirmation, and source i
   page,
 }) => {
   await page.goto("/");
-  await enterDemoComplaint(page);
+  await enterComplaint(page);
   await expect(
     page.getByRole("link", { name: "View official contact source" }),
   ).toHaveAttribute("href", /dncc\.gov\.bd/);

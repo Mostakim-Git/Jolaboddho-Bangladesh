@@ -31,48 +31,96 @@ export const responseSchema = {
     "affects",
   ],
 };
+// Google retires gemini-2.5-flash on 2026-10-20, so the default is the current
+// stable Flash model. Operators can override it with GEMINI_MODEL.
+export const GEMINI_DEFAULT_MODEL = "gemini-3.8-flash";
+
+// Transient capacity and rate-limit responses are worth one retry, because a
+// citizen waiting for a complaint draft should not see a hard failure for a
+// short-lived 503. Latency stays bounded: 3 attempts of 45 s at most.
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAYS_MS = [1500, 4000];
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+const requestTimeoutMs = () => Number(process.env.GEMINI_TIMEOUT_MS) || 45000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function gemini(parts, json = false) {
   if (!process.env.GEMINI_API_KEY) {
     const e = new Error(
-      "Gemini is not configured yet. Add GEMINI_API_KEY on the server, or explore the demo.",
+      "Gemini is not configured yet. Add GEMINI_API_KEY on the server, then try again.",
     );
     e.status = 503;
     throw e;
   }
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env.GEMINI_MODEL || "gemini-2.5-flash")}:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          temperature: json ? 0 : 0.15,
-          ...(json
-            ? { responseMimeType: "application/json", responseSchema }
-            : {}),
-        },
-      }),
-      signal: AbortSignal.timeout(45000),
+  const model = process.env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL;
+  // The key travels in the x-goog-api-key header, never in the URL query string,
+  // because URLs are logged by proxies and servers far more often than headers.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const requestBody = JSON.stringify({
+    contents: [{ role: "user", parts }],
+    generationConfig: {
+      temperature: json ? 0 : 0.15,
+      ...(json ? { responseMimeType: "application/json", responseSchema } : {}),
     },
-  );
-  if (!response.ok)
-    throw new Error(
-      "Gemini could not complete this request. Check the server API key, quota, and network connection, then retry.",
-    );
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts
-    ?.filter((p) => !p.thought)
-    .map((p) => p.text || "")
-    .join("");
-  if (!text || data.candidates?.[0]?.finishReason !== "STOP")
-    throw new Error(
-      "Gemini could not provide a complete response. Please try another photo or retry.",
-    );
-  return text;
+  });
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const lastAttempt = attempt === MAX_ATTEMPTS - 1;
+    const retryDelay =
+      RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)] +
+      // Jitter keeps parallel citizen requests from retrying in lockstep.
+      Math.floor(Math.random() * 500);
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
+        },
+        body: requestBody,
+        signal: AbortSignal.timeout(requestTimeoutMs()),
+      });
+    } catch (err) {
+      // Timeout, DNS, TLS or socket failure. Rethrow the original error on the
+      // last attempt so the API error handler can still map TimeoutError and
+      // "fetch failed" to their friendly messages.
+      if (lastAttempt) throw err;
+      console.error(
+        `Gemini request failed (attempt ${attempt + 1}/${MAX_ATTEMPTS}) model=${model}:`,
+        err.message,
+      );
+      await sleep(retryDelay);
+      continue;
+    }
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(
+        `Gemini API error [${response.status}] model=${model}:`,
+        detail.slice(0, 400),
+      );
+      if (RETRYABLE_STATUS.has(response.status) && !lastAttempt) {
+        await sleep(retryDelay);
+        continue;
+      }
+      throw new Error(
+        "Gemini could not complete this request. Check the server API key, quota, and network connection, then retry.",
+      );
+    }
+    const data = await response.json();
+    const candidate = data.candidates?.[0];
+    // Thinking parts carry the model's internal reasoning and are not user copy.
+    const text = candidate?.content?.parts
+      ?.filter((p) => !p.thought)
+      .map((p) => p.text || "")
+      .join("");
+    if (!text || candidate?.finishReason !== "STOP")
+      throw new Error(
+        "Gemini could not provide a complete response. Please try another photo or retry.",
+      );
+    return text;
+  }
+  throw new Error("Gemini could not complete this request. Please retry.");
 }
 
 export const VISION_PROMPT_VERSION = "2026-10-12.2";

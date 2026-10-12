@@ -140,26 +140,6 @@ button {
   gap: 6px;
   padding: 10px 0;
 }
-.nav-divider {
-  height: 22px;
-  width: 1px;
-  background: #e1e6df;
-}
-.demo-button {
-  border: 1px solid #bdd9cd;
-  border-radius: 7px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: #f2f7ee;
-  color: #146b60;
-  font-weight: 600;
-  min-height: 41px;
-}
-.demo-button:hover {
-  background: #e0f0e6;
-}
 main {
   max-width: 1180px;
   padding: 0 28px;
@@ -516,24 +496,6 @@ main {
 .upload-zone > small {
   font-size: 9px;
   color: #9ca79a;
-}
-.sample-prompt {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 19px 0 17px;
-  font-size: 10px;
-  color: #8c978c;
-}
-.sample-prompt button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #277c65;
-  padding: 5px 0;
 }
 .privacy-note {
   border-top: 1px solid #edf0e9;
@@ -1187,61 +1149,6 @@ footer {
   flex-shrink: 0;
   margin-top: 2px;
 }
-.demo-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff4da;
-  border: 1px solid #eadcba;
-  border-radius: 8px;
-  padding: 13px 17px;
-  gap: 15px;
-  margin-bottom: 20px;
-  font-size: 11px;
-  line-height: 1.7;
-  color: #927338;
-}
-.demo-banner > div {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.demo-banner svg {
-  flex-shrink: 0;
-}
-.demo-banner button {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-  color: #82672f;
-  font-size: 10px;
-  font-weight: 650;
-  padding: 8px 0;
-}
-.demo-photo {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 17px;
-  background: #edf3e6;
-}
-.demo-photo svg {
-  display: block;
-  width: 100%;
-  height: 210px;
-  object-fit: cover;
-}
-.demo-image-label {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  font-size: 9px;
-  padding: 5px 8px;
-  background: #fffefaeb;
-  border-radius: 5px;
-  color: #527163;
-}
 .photo-preview {
   height: 235px;
   border-radius: 8px;
@@ -1505,11 +1412,6 @@ footer {
   margin-top: 9px;
   line-height: 1.85;
 }
-.risk-demo-note {
-  font-size: 9px;
-  color: #9a834e;
-  margin-bottom: 12px;
-}
 .draft-result textarea {
   width: 100%;
   resize: vertical;
@@ -1746,17 +1648,8 @@ footer {
     gap: 18px;
   }
   .desktop-link,
-  .nav-about,
-  .nav-divider {
+  .nav-about {
     display: none !important;
-  }
-  .demo-button {
-    font-size: 11px;
-    padding: 9px 12px;
-    min-height: 40px;
-  }
-  .demo-button svg:last-child {
-    display: none;
   }
   .hero {
     padding-top: 35px;
@@ -1904,15 +1797,6 @@ footer {
     line-height: 1.8;
     display: block;
   }
-  .sample-prompt {
-    flex-wrap: wrap;
-    font-size: 9px;
-    gap: 2px;
-    margin: 15px 0;
-  }
-  .sample-prompt button {
-    font-size: 9px;
-  }
   .privacy-note {
     font-size: 8px;
   }
@@ -2051,15 +1935,6 @@ footer {
   footer {
     margin: 0 20px;
   }
-  .demo-banner {
-    font-size: 10px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-  .demo-banner button {
-    padding-left: 28px;
-  }
   .problem-row {
     flex-wrap: wrap;
   }
@@ -2100,12 +1975,7 @@ footer {
   .draft-actions .button {
     font-size: 11px;
   }
-  .demo-photo svg {
-    height: 150px;
-  }
-  .demo-image-label {
-    font-size: 7px;
-  }
+
   .weather-source {
     font-size: 7px;
   }
@@ -2280,15 +2150,6 @@ footer {
   }
   .upload-icon {
     margin-bottom: 18px;
-  }
-  .sample-prompt {
-    font-size: 10px;
-    gap: 5px;
-    margin: 17px 0;
-  }
-  .sample-prompt button {
-    font-size: 10px;
-    min-height: 34px;
   }
   .privacy-note {
     font-size: 9px;
@@ -2503,20 +2364,7 @@ footer {
     font-size: 7px;
     text-align: right;
   }
-  .demo-banner {
-    font-size: 10px;
-  }
-  .demo-banner button {
-    font-size: 10px;
-    min-height: 38px;
-  }
-  .demo-photo svg {
-    height: 185px;
-  }
-  .demo-image-label {
-    font-size: 8px;
-  }
-  .analysis-heading {
+.analysis-heading {
     font-size: 10px;
   }
   .analysis-heading small {
@@ -2650,8 +2498,7 @@ footer {
 }
 .upload-zone p,
 .upload-zone > small,
-.privacy-note,
-.sample-prompt {
+.privacy-note {
   color: #758571;
 }
 .metric-label,
@@ -2801,11 +2648,6 @@ main:not([data-screen="home"]) .card-description {
 }
 main:not([data-screen="home"]) .section-heading {
   padding-top: 0;
-}
-main:not([data-screen="home"]) .demo-banner {
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 5px;
 }
 .evidence-text {
   font-size: 13px;

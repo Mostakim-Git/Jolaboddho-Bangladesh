@@ -8,9 +8,21 @@ Supports SDG **6** (Clean Water and Sanitation), **11** (Sustainable Cities and 
 
 ## Download and verification
 
-[Download the Android test APK (ZIP)](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912/artifacts/11740379282) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912) · [Exact verification and pending gates](docs/VERIFICATION.md)
+[Latest release](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/releases) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38252682326) · [Exact verification and pending gates](docs/VERIFICATION.md)
 
-The APK is debug-signed and the artifact expires 11 November 2026. Unzip and install `app-debug.apk`. **Live Gemini features require your deployed HTTPS backend and a fresh private key**; this is not a ready-to-use hosted production service.
+Download the APK and its `.sha256` checksum from the latest release, then install it. Release APKs are currently **debug-signed** until a signing keystore is added to repository secrets. Push a version tag to publish a new one; see [Publishing a GitHub Release](docs/ANDROID.md#publishing-a-github-release).
+
+The APK is pre-pointed at the deployed backend, so **live Gemini analysis and drafting work without any first-run setup** — provided that deployment holds its own `GEMINI_API_KEY`. There is no demo or sample fallback: if the AI service is unavailable, the app says so. Check the deployment with `curl https://jolabaddho-waterlogging-reporter.ai.studio/api/health`.
+
+## Deployed backend
+
+The live backend runs at **`https://jolabaddho-waterlogging-reporter.ai.studio`**. It is a public, non-secret origin, exported as `DEFAULT_BACKEND_ORIGIN` in `shared/backend-url.js`:
+
+- The installed Android app falls back to it, so it works without any first-run setup. A device that has configured its own origin in **Service settings** keeps that choice.
+- A website build stays same-origin (`/api`) so the Vite dev proxy and a same-domain deployment both work; set `VITE_API_BASE_URL` to point a website build at a different origin at build time.
+- The origin alone grants nothing: the deployed server must hold its own `GEMINI_API_KEY` and allow the app's origin (native WebView origin `https://localhost` is allowed by default). Verify with `curl <origin>/api/health`, which reports `{"geminiConfigured":true|false}` and never exposes the key.
+
+Never put an API key in `DEFAULT_BACKEND_ORIGIN` or any `VITE_` variable; those are baked into the public bundle.
 
 ## Run locally
 
@@ -29,15 +41,20 @@ Open the Vite URL on port **5173**. The API runs on **3001**. The dev server pro
 
 **Official email directory:** all 12 supported city corporations now have source-linked public contacts. See [docs/CONTACTS.md](docs/CONTACTS.md). Publication is verified against official listings; inbox delivery and ward responsibility are not.
 
-**Try demo** works immediately without a key or external network. It uses an original illustrated drainage scene, a fixed sample assessment, an illustrative rainfall series, and a local Bangla letter template. Every sample result is labeled; demo letters are **not** attributed to Gemini. Demo reports are not actual citizen reports. A demo location can also be used to request **real** weather independently of demo report mode.
+**There is no demo, sample or template mode.** Every report is a real report: your own photo, a location you pin or grant GPS for, a live Open-Meteo forecast, and a Gemini-drafted letter you review before sending. Nothing in the app invents an assessment, a forecast, or a letter. If the AI backend is unreachable or has no key, the app says so instead of filling the gap with samples.
+
+The installed Android app is pre-pointed at the deployed backend (see [Deployed backend](#deployed-backend)), so it works as soon as it is installed. A website build uses its own origin.
 
 ### Configuration
 
-| Variable         | Default            | Purpose                                                        |
-| ---------------- | ------------------ | -------------------------------------------------------------- |
-| `GEMINI_API_KEY` | unset              | Server-only Google Gemini API key                              |
-| `GEMINI_MODEL`   | `gemini-2.5-flash` | Model supporting image input and structured JSON output        |
-| `PORT`           | `3001`             | Express port; keep 3001 for the default Vite development proxy |
+| Variable            | Default            | Purpose                                                        |
+| ------------------- | ------------------ | -------------------------------------------------------------- |
+| `GEMINI_API_KEY`    | unset              | Server-only Google Gemini API key                              |
+| `GEMINI_MODEL`      | `gemini-3.8-flash` | Model supporting image input and structured JSON output        |
+| `GEMINI_TIMEOUT_MS` | `45000`            | Per-attempt timeout for one Gemini request                      |
+| `PORT`              | `3001`             | Express port; keep 3001 for the default Vite development proxy |
+
+`gemini-2.5-flash` was the earlier default and is **retired by Google on 20 October 2026**, so the default is now the current stable Flash model. Point `GEMINI_MODEL` at any model that accepts image input and structured JSON output. A transient `429`/`5xx` response is retried up to three times with a short backoff; a key or quota error fails immediately with a friendly message, and the raw provider error is logged server-side only.
 
 Never use a `VITE_` prefix for the API key. `.env` files are Git-ignored. Do not put credentials into the browser, screenshots, or source control. There is no need to paste credentials into a chat.
 
@@ -61,12 +78,12 @@ Without a configured key, real AI requests return a friendly setup message. The 
    }
    ```
    Allowed problem types: `blocked_drain`, `flooded_road`, `blocked_canal`, `broken_culvert`, `garbage_in_drain`, and `none`. Severity is an integer from 1–5; confidence is 0–1. Evidence is a short sentence. Affects is an array drawn only from `pedestrians`, `vehicles`, `shops`, `homes`, `school` (empty if none is visible). A single optional JSON code fence is stripped; invalid model output gets a friendly retry error. The model is instructed not to infer hidden causes or obey text inside images. Low-confidence results show a verification notice. Raw validated JSON is inspectable in the interface.
-3. **Location:** browser GPS, manual OpenStreetMap pin, editable coordinates/area name, or a clearly identified Dhaka demo location. Manual coordinate entry works even when map tiles cannot load. Coordinates are restricted to a Bangladesh bounding box (not a precise administrative boundary). GPS requires HTTPS or localhost and permission; denied access has a manual fallback. GPS coordinates are not reverse-geocoded into an invented address. The area name can be edited after any location selection, and the selected coordinates/name appear on Result.
+3. **Location:** browser GPS, manual OpenStreetMap pin, or editable coordinates and area name. Manual coordinate entry works even when map tiles cannot load. Coordinates are restricted to a Bangladesh bounding box (not a precise administrative boundary). GPS requires HTTPS or localhost and permission; denied access has a manual fallback. GPS coordinates are not reverse-geocoded into an invented address. The area name can be edited after any location selection, and the selected coordinates/name appear on Result.
 4. **Forecast:** direct browser request to the live Open-Meteo Forecast API. Aggregates **24 hourly bins beginning at the current hour**, so the first bin includes the already-elapsed portion of that hour. Requests `hourly=precipitation,precipitation_probability`, `daily=precipitation_sum`, `forecast_days=2`, `timezone=Asia/Dhaka`, and Unix timestamps. Daily sums are not substituted for rolling 24-hour totals. Reports total `precipitation`, maximum hourly `precipitation`, maximum hourly `precipitation_probability`, and the first peak rain hour. Zero rain shows no peak hour. Timestamps use `Asia/Dhaka`, regardless of the browser timezone. Source label: **Live data: Open-Meteo, fetched at HH:MM**. Missing, null, incomplete, or discontinuous forecast data is rejected. Refresh fetches new data and invalidates the old complaint.
 5. **Risk:** deterministic JavaScript, shared between frontend and backend. Three factual reasons accompany the LOW / MEDIUM / HIGH badge. Rules are inspectable in the UI.
 6. **Complaint:** Gemini receives only the validated photo assessment, location, selected authority, weather summary (including the peak hour), computed risk, and today’s date in Bangladesh time. It is instructed to distinguish future forecasts from observations, use only known facts, and leave name and phone blank. The citizen can edit, copy, use the system share sheet, or open an Email draft. Email prefills a selected official-source address or a user-entered address only after recipient confirmation; a configured mail app is required. Source links and publication caveats are displayed. The recipient dropdown includes DNCC, DSCC, Chattogram and other cities, plus a custom Other office. The citizen must verify the office. Unsupported sharing has a copy fallback. **Nothing is sent to an authority automatically.**
 
-Changing photo, location, forecast, corporation or receiving-office selection invalidates the previous complaint. Email confirmation resets on recipient edits. Stale async responses cannot overwrite newer inputs or a reset/demo report. Refreshing the page clears everything.
+Changing photo, location, forecast, corporation or receiving-office selection invalidates the previous complaint. Email confirmation resets on recipient edits. Stale async responses cannot overwrite newer inputs or a reset report. Refreshing the page clears everything.
 
 ## Real-photo evaluation
 
@@ -109,7 +126,7 @@ The live flow needs browser access to `api.open-meteo.com` and backend access to
 
 Arena's coding sandbox can restrict outbound hosts; if it blocks Gemini, the API cannot reach the model even with a correct key. Deploy the app to a Node host with the required network access for end-to-end live AI use. The preview's weather request runs in the user's browser and depends on that browser's network permissions.
 
-Live Gemini and Open-Meteo responses were **not** independently verified in the restricted development environment. Automated end-to-end tests use explicitly mocked external responses. Demo mode remains usable offline after the app has loaded.
+Live Gemini and Open-Meteo responses were **not** independently verified in the restricted development environment. Automated end-to-end tests use explicitly mocked external responses. Without a reachable backend the app offers no analysis or drafting — it reports the failure rather than substituting sample data — and the live forecast needs internet access from the citizen's device.
 
 ## Production
 
@@ -130,7 +147,7 @@ npm run test:e2e           # responsive layout and browser workflows
 npm run build              # production compilation
 ```
 
-For environments with a preinstalled Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable. The Playwright suite starts the app automatically or reuses an existing development server. External responses are mocked to test real-vs-demo labeling, upload and analysis, the full complaint flow, forecast failures, manual coordinates, GPS denial, modal accessibility, copy/share/email encoding, 1024 px resizing, EXIF orientation, and all five screen layouts from 320 px to 1440 px.
+For environments with a preinstalled Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable. The Playwright suite starts the app automatically or reuses an existing development server. External responses are mocked to test upload and analysis, the full complaint flow, forecast failures, stale-response rejection, manual coordinates, GPS denial, modal accessibility, copy/share/email encoding, 1024 px resizing, EXIF orientation, the absence of any demo/sample path, and all five screen layouts from 320 px to 1440 px.
 
 ## Project structure
 

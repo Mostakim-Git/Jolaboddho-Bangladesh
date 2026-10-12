@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// Release signing is opt-in. It activates only when a keystore is supplied through
+// environment variables (CI secrets), so local and CI builds keep working without
+// one. Never commit a keystore; *.jks and *.keystore are Git-ignored.
+def releaseKeystorePath = System.getenv("JOLABADDHO_KEYSTORE_PATH")
+def releaseKeystoreAvailable = releaseKeystorePath && file(releaseKeystorePath).exists()
+
+// Resolve the version metadata here: a bare "versionCode (expr).toInteger()" inside
+// the android block parses as a call chain on versionCode's own return value.
+def ciVersionCode = (System.getenv("JOLABADDHO_VERSION_CODE") ?: "2").toInteger()
+def ciVersionName = System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.2.0"
+
 android {
     namespace "bd.jolabaddho.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +18,9 @@ android {
         applicationId "bd.jolabaddho.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Tagged release builds pass the matching version in; local builds use the default.
+        versionCode ciVersionCode
+        versionName ciVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +28,25 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        // Created only when a keystore exists: an empty release config would be an
+        // incomplete signing configuration that newer AGP versions reject.
+        if (releaseKeystoreAvailable) {
+            release {
+                storeFile file(releaseKeystorePath)
+                storePassword System.getenv("JOLABADDHO_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("JOLABADDHO_KEY_ALIAS")
+                keyPassword System.getenv("JOLABADDHO_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseKeystoreAvailable) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

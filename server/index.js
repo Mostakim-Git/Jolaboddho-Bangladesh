@@ -142,7 +142,7 @@ app.use((err, req, res, next) => {
         : err.name === "TimeoutError"
           ? "The AI request timed out. Please try again."
           : err.message === "fetch failed"
-            ? "The AI service could not be reached. Check the server network connection or try demo mode."
+            ? "The AI service could not be reached. Please check your connection and try again."
             : err.message || "Something went wrong. Please try again.",
   });
 });

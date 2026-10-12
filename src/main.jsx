@@ -52,7 +52,6 @@ import {
   calculateRisk,
   summarizeWeather,
   localTime,
-  localDate,
   problemLabels,
 } from "../shared/risk";
 import { analysisSchema } from "../shared/schema";
@@ -62,39 +61,6 @@ import "@fontsource/noto-sans-bengali/400.css";
 import "@fontsource/noto-sans-bengali/500.css";
 import "./styles.css";
 const LocationMap = lazy(() => import("./LocationMap"));
-const demoAnalysis = {
-  problem_type: "blocked_drain",
-  severity: 4,
-  visible_evidence:
-    "Waste obstructs a roadside drain opening, with standing water along the road edge.",
-  confidence: 0.91,
-  affects: ["pedestrians"],
-};
-const dhaka = {
-  lat: 23.8103,
-  lng: 90.4125,
-  label: "Dhaka demo location",
-  mode: "demo",
-};
-function demoWeather() {
-  const time = Math.floor(Date.now() / 3600000) * 3600;
-  const rain = [
-    0, 0.2, 0.8, 1.4, 2.8, 4.2, 6.5, 8.2, 5.1, 3.2, 2.4, 1.1, 0.6, 0.2, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0,
-  ];
-  return {
-    total: rain.reduce((a, b) => a + b, 0),
-    peak: 8.2,
-    probability: 85,
-    peakTime: time + 7 * 3600,
-    rows: rain.map((r, i) => ({
-      time: time + i * 3600,
-      rain: r,
-      probability: 85,
-    })),
-    source: "demo",
-  };
-}
 async function api(path, body) {
   const r = await fetch(await apiEndpoint(path), {
     method: "POST",
@@ -102,7 +68,16 @@ async function api(path, body) {
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(60000),
   });
-  const data = await r.json();
+  let data;
+  try {
+    data = await r.json();
+  } catch {
+    // A static host or a proxy error page answers with HTML, not JSON. Say so
+    // instead of surfacing a raw parse error to the citizen.
+    throw new Error(
+      "The service replied in an unexpected format. Check that the configured origin is the Jolabaddho backend, then retry.",
+    );
+  }
   if (!r.ok)
     throw new Error(
       data.error || "The service is unavailable. Please try again.",
@@ -139,57 +114,15 @@ function CardTitle({ step, title, subtitle, icon: Icon, done }) {
     </div>
   );
 }
-function DemoPhoto() {
-  return (
-    <div className="demo-photo">
-      <svg
-        viewBox="0 0 500 220"
-        role="img"
-        aria-label="Illustrated demo of a blocked drain, not an actual submitted photograph"
-      >
-        <defs>
-          <linearGradient id="street" x2="0" y2="1">
-            <stop stopColor="#adbbb5" />
-            <stop offset="1" stopColor="#768f8a" />
-          </linearGradient>
-        </defs>
-        <rect width="500" height="220" fill="url(#street)" />
-        <path d="M0 0h500v40L0 168Z" fill="#cbd1bd" />
-        <path d="m0 137 500-123v27L0 178Z" fill="#dedaca" />
-        <path d="m0 167 500-127v22L0 189Z" fill="#8e9c91" />
-        <path d="m210 119 105-25 40 28-109 27Z" fill="#334f4c" />
-        <g stroke="#8a9b90" strokeWidth="7">
-          <path d="m228 116 35 24m-13-29 36 23m-12-29 36 23m-14-29 36 22" />
-        </g>
-        <path
-          d="M56 195q75-43 167-44t125 7 121 29-106 21-208-1Z"
-          fill="#89b5b0"
-        />
-        <path
-          d="m98 185 58-6m132 10 46 3m-161 13 39-2"
-          stroke="#bed2c9"
-          strokeWidth="2"
-        />
-        <path d="m255 139 20-12 17 9-11 12Z" fill="#e7d7ad" />
-        <path d="m303 136 10-15 21 2-4 15Z" fill="#b7c2b1" />
-        <path d="m225 148 10-11 10 5-5 13Z" fill="#cfb281" />
-        <path d="m283 132 6-13 6 4-2 12Z" fill="#e9e5cc" />
-      </svg>
-      <span className="demo-image-label">
-        Illustrative sample · not a real photo
-      </span>
-    </div>
-  );
-}
-function Assessment({ analysis, demo, onChange }) {
+function Assessment({ analysis, onChange }) {
   return (
     <div className="analysis-result">
       <div className="analysis-heading">
         <span>
           <CheckCheck size={17} />{" "}
-          {demo ? "Sample assessment" : "Photo assessed"}
+          {"Photo assessed"}
         </span>
-        <small>{demo ? "Demo data" : "Source: Gemini Vision"}</small>
+        <small>{"Source: Gemini Vision"}</small>
       </div>
       <div className="problem-row">
         <h3>{problemLabels[analysis.problem_type]}</h3>
@@ -254,8 +187,7 @@ function App() {
   const [otherAuthority, setOtherAuthority] = useState("");
   const [photo, setPhoto] = useState(null),
     [photoName, setPhotoName] = useState("");
-  const [analysis, setAnalysis] = useState(null),
-    [demo, setDemo] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false),
     [preparing, setPreparing] = useState(false),
     [photoError, setPhotoError] = useState("");
@@ -264,8 +196,8 @@ function App() {
     [locationError, setLocationError] = useState("");
   const [manual, setManual] = useState(false),
     [coords, setCoords] = useState({
-      lat: "23.8103",
-      lng: "90.4125",
+      lat: "",
+      lng: "",
       label: "",
     });
   const [weather, setWeather] = useState(null),
@@ -323,48 +255,6 @@ function App() {
   function scrollTo(id) {
     go({ report: "photo", forecast: "result" }[id] || id);
   }
-  function loadDemo() {
-    photoVersion.current++;
-    weatherVersion.current++;
-    gpsVersion.current++;
-    clearDraft();
-    setPhoto(null);
-    setPhotoName("Sample drainage scene");
-    setDemo(true);
-    setAnalysis(demoAnalysis);
-    setLocation(dhaka);
-    setWeather(demoWeather());
-    setPhotoError("");
-    setLocationError("");
-    setWeatherError("");
-    setAnalyzing(false);
-    setPreparing(false);
-    setLocating(false);
-    setWeatherLoading(false);
-    setManual(false);
-    go("result");
-  }
-  function reset() {
-    photoVersion.current++;
-    weatherVersion.current++;
-    gpsVersion.current++;
-    clearDraft();
-    setPhoto(null);
-    setPhotoName("");
-    setDemo(false);
-    setAnalysis(null);
-    setLocation(null);
-    setWeather(null);
-    setPhotoError("");
-    setLocationError("");
-    setWeatherError("");
-    setPreparing(false);
-    setAnalyzing(false);
-    setLocating(false);
-    setWeatherLoading(false);
-    setManual(false);
-    scrollTo("report");
-  }
   async function takePhoto() {
     if (!isNative) {
       camera.current.click();
@@ -389,10 +279,6 @@ function App() {
     setAnalyzing(false);
     setPreparing(true);
     setPhoto(null);
-    if (demo) {
-      setDemo(false);
-      if (location) getWeather(location);
-    }
     try {
       const prepared = await prepareImage(file);
       if (photoVersion.current === version) {
@@ -498,7 +384,7 @@ function App() {
         ) {
           setLocating(false);
           setLocationError(
-            "This app supports locations in Bangladesh. Please select a local pin, or try the demo.",
+            "This app supports locations in Bangladesh. Please select a local pin instead.",
           );
           return;
         }
@@ -557,14 +443,6 @@ function App() {
     setDraftError("");
     setCopied(false);
     setShareMessage("");
-    if (demo || weather.source === "demo") {
-      setDraft(
-        `বরাবর\n${recipient}\nসংশ্লিষ্ট দপ্তর\nতারিখ: ${localDate()}\n\nবিষয়: জলাবদ্ধতার ঝুঁকি কমাতে নালা পরিদর্শন ও পরিষ্কারের আবেদন।\n\nমহোদয়/মহোদয়া,\n${location.label} এলাকায় (${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}) নমুনা পর্যবেক্ষণে নালার মুখে বর্জ্য এবং রাস্তার পাশে জমে থাকা পানি দেখানো হয়েছে। সমস্যার নমুনা তীব্রতা ৪/৫।\n\n${weather.source === "live" ? `Open-Meteo-এর সরাসরি সংগৃহীত পূর্বাভাস অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা রয়েছে (তথ্য সংগ্রহ: ${localTime(weather.fetchedAt)}, বাংলাদেশ সময়)। এটি পূর্বাভাস, পর্যবেক্ষণ নয়।` : `ডেমো আবহাওয়ার তথ্য অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা দেখানো হয়েছে। এটি বাস্তব পর্যবেক্ষণ বা যাচাইকৃত পূর্বাভাস নয়।`}\nসর্বোচ্চ ঘণ্টাভিত্তিক বৃষ্টি: ${weather.peak.toFixed(1)} মিমি, সময়: ${weather.peak > 0 ? localTime(weather.peakTime) + " (বাংলাদেশ সময়)" : "প্রযোজ্য নয়"}। নির্দেশক ঝুঁকি: ${risk.level}।\n\nউল্লিখিত স্থান সরেজমিনে যাচাই করে প্রয়োজনীয় ব্যবস্থা গ্রহণের অনুরোধ করছি।\n\nবিনীত,\nনাম: __________________\nফোন: __________________\n\n[এটি কেবল একটি ডেমো খসড়া। পাঠানোর আগে বাস্তব তথ্য দিয়ে প্রতিস্থাপন করুন।]`,
-      );
-      setDraftSource("Demo template · not generated by Gemini");
-      setDraftLoading(false);
-      return;
-    }
     try {
       const data = await api("/api/complaint", {
         analysis,
@@ -668,10 +546,6 @@ function App() {
             </a>
             <button className="nav-about" onClick={() => setAbout(true)}>
               Our purpose <ArrowUpRight size={14} />
-            </button>
-            <span className="nav-divider" />
-            <button className="demo-button" onClick={loadDemo}>
-              <Sparkles size={15} /> Try demo <ArrowRight size={15} />
             </button>
           </nav>
         </div>
@@ -796,21 +670,6 @@ function App() {
             <LockKeyhole size={14} /> Private by design
           </span>
         </div>
-        {demo && screen !== "home" && (
-          <div className="demo-banner">
-            <div>
-              <Sparkles size={18} />
-              <span>
-                <strong>You’re exploring a demo.</strong> The photo assessment
-                is illustrative. Forecasts are sample data unless explicitly
-                labeled live.
-              </span>
-            </div>
-            <button onClick={reset}>
-              Start a real report <ArrowRight size={15} />
-            </button>
-          </div>
-        )}
         <div className="workspace" hidden={screen === "home"}>
           <div className="column">
             <section className="card photo-card" hidden={screen !== "photo"}>
@@ -847,9 +706,7 @@ function App() {
                   e.target.value = "";
                 }}
               />
-              {demo ? (
-                <DemoPhoto />
-              ) : photo ? (
+              {photo ? (
                 <div className="photo-preview">
                   <img src={photo} alt="Your selected drainage problem" />
                   <button
@@ -937,17 +794,8 @@ function App() {
               {analysis && screen === "photo" && (
                 <Assessment
                   analysis={analysis}
-                  demo={demo}
                   onChange={() => upload.current.click()}
                 />
-              )}
-              {!analysis && (
-                <div className="sample-prompt">
-                  <span>Just looking around?</span>
-                  <button onClick={loadDemo}>
-                    Try a sample report <ArrowRight size={14} />
-                  </button>
-                </div>
               )}
               <div className="privacy-note">
                 <ShieldCheck size={15} />
@@ -1000,11 +848,7 @@ function App() {
                       <small>
                         {location.lat.toFixed(5)}° N, {location.lng.toFixed(5)}°
                         E ·{" "}
-                        {location.mode === "gps"
-                          ? "GPS"
-                          : location.mode === "demo"
-                            ? "Demo location"
-                            : "Manual pin"}
+                        {location.mode === "gps" ? "GPS" : "Manual pin"}
                       </small>
                     </span>
                   </div>
@@ -1118,9 +962,6 @@ function App() {
                 <span>
                   <LockKeyhole size={12} /> Only used for this report
                 </span>
-                <button onClick={() => chooseLocation(dhaka)}>
-                  Use demo location <ArrowRight size={13} />
-                </button>
               </div>
             </section>
           </div>
@@ -1144,11 +985,7 @@ function App() {
                       <p>
                         {location.lat.toFixed(5)}° N, {location.lng.toFixed(5)}°
                         E ·{" "}
-                        {location.mode === "demo"
-                          ? "Demo coordinate"
-                          : location.mode === "gps"
-                            ? "GPS"
-                            : "Manual pin"}
+                        {location.mode === "gps" ? "GPS" : "Manual pin"}
                       </p>
                     </div>
                     <button
@@ -1172,7 +1009,6 @@ function App() {
                 {analysis ? (
                   <Assessment
                     analysis={analysis}
-                    demo={demo}
                     onChange={() => go("photo")}
                   />
                 ) : (
@@ -1209,13 +1045,11 @@ function App() {
                   <span />
                   {weather?.source === "live"
                     ? "Live forecast"
-                    : weather?.source === "demo"
-                      ? "Sample forecast"
-                      : weatherLoading
-                        ? "Fetching forecast"
-                        : location
-                          ? "Forecast unavailable"
-                          : "Awaiting location"}
+                    : weatherLoading
+                      ? "Fetching forecast"
+                      : location
+                        ? "Forecast unavailable"
+                        : "Awaiting location"}
                 </span>
               </div>
               <div className="forecast-main">
@@ -1249,27 +1083,17 @@ function App() {
                 aria-label={
                   weather
                     ? "Hourly rainfall forecast chart"
-                    : "Placeholder chart. No forecast data loaded."
+                    : "No rainfall forecast loaded yet"
                 }
                 role="img"
               >
-                {(
-                  weather?.rows ||
-                  [
-                    1, 2, 3, 4, 6, 7, 4, 5, 8, 10, 13, 11, 9, 12, 10, 7, 5, 6,
-                    3, 4, 2, 2, 1, 1,
-                  ].map((r, i) => ({ rain: r, time: i }))
-                ).map((r, i) => (
+                {(weather?.rows || []).map((r, i) => (
                   <div
                     key={i}
                     style={{
-                      height: `${Math.max(4, (r.rain / (weather ? Math.max(weather.peak, 1) : 15)) * 100)}%`,
+                      height: `${Math.max(4, (r.rain / Math.max(weather.peak, 1)) * 100)}%`,
                     }}
-                    title={
-                      weather
-                        ? `${localTime(r.time)}: ${r.rain.toFixed(1)} mm`
-                        : undefined
-                    }
+                    title={`${localTime(r.time)}: ${r.rain.toFixed(1)} mm`}
                   />
                 ))}
               </div>
@@ -1339,9 +1163,7 @@ function App() {
                   />
                   {weather?.source === "live"
                     ? `Live data: Open-Meteo, fetched at ${localTime(weather.fetchedAt)}`
-                    : weather?.source === "demo"
-                      ? "Demo data · illustrative, not a live forecast"
-                      : "Weather source: Open-Meteo"}
+                    : "Weather source: Open-Meteo"}
                 </span>
                 {location && !weatherLoading && (
                   <button
@@ -1392,11 +1214,6 @@ function App() {
                       </li>
                     ))}
                   </ul>
-                  {(demo || weather.source === "demo") && (
-                    <div className="risk-demo-note">
-                      Demo outlook · based on illustrative inputs
-                    </div>
-                  )}
                   <details>
                     <summary>
                       How is this calculated? <ChevronDown size={14} />
@@ -1521,7 +1338,7 @@ function App() {
                   ) : (
                     <>
                       <Sparkles size={17} />
-                      {demo ? "Create demo complaint" : "Draft my complaint"}
+                      Draft my complaint
                       <ArrowRight size={16} />
                     </>
                   )}
