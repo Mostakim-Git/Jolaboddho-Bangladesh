@@ -23,6 +23,8 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
       - name: Use the runner's preinstalled Android SDK
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0' > sdk-setup.log 2>&1 || { tail -n 25 sdk-setup.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
@@ -58,7 +60,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: cd android && ./gradlew connectedDebugAndroidTest --no-daemon > device-test.log 2>&1 || { tail -n 35 device-test.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+          script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon > device-test.log 2>&1 || { tail -n 35 device-test.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
       - name: Surface instrumentation failures in check annotations
         if: always()
         run: python3 scripts/report-android-tests.py

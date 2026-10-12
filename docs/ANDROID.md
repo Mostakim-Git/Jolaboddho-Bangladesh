@@ -45,7 +45,7 @@ cd android
 ./gradlew assembleDebug lintDebug
 ```
 
-The generated APK is `android/app/build/outputs/apk/debug/app-debug.apk`. For an emulator/device smoke test: `./gradlew connectedDebugAndroidTest` with a running device. The native project is committed; generated web copies, APKs, SDK files, signing keys, caches and Gradle build output are excluded from Git.
+The generated APK is `android/app/build/outputs/apk/debug/app-debug.apk`. For an emulator/device smoke test: `./gradlew :app:connectedDebugAndroidTest` with a running device. The native project is committed; generated web copies, APKs, SDK files, signing keys, caches and Gradle build output are excluded from Git.
 
 ## Backend deployment example
 
