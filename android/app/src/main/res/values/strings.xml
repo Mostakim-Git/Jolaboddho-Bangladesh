@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jolabaddho?</string>
+    <string name="title_activity_main">Jolabaddho?</string>
+    <string name="package_name">bd.jolabaddho.app</string>
+    <string name="custom_url_scheme">bd.jolabaddho.app</string>
+</resources>

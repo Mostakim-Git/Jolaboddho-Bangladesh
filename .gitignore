@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+playwright-results/
+
+test-results/
+playwright-report/
+
+# Local photographs, evaluation downloads and private signing material
+image-search/
+evaluation/images/
+evaluation/runs/
+*.jks
+*.keystore
+*.apk
+*.aab
+.gradle/
+*.hprof

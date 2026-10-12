@@ -1,0 +1,66 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  isEmail,
+  complaintMailto,
+  contactIsStale,
+} from "../shared/contacts.js";
+import { normalizeBackendUrl } from "../shared/backend-url.js";
+const directory = JSON.parse(
+  readFileSync(new URL("../data/authorities.json", import.meta.url)),
+);
+test("all 12 authorities have sourced, valid contact mailboxes", () => {
+  assert.equal(directory.length, 12);
+  assert.equal(new Set(directory.map((a) => a.id)).size, 12);
+  for (const a of directory) {
+    assert.equal(a.verification, "official-publication-only");
+    assert.ok(a.contacts.length);
+    for (const c of a.contacts) {
+      assert.ok(isEmail(c.email));
+      assert.match(new URL(c.sourceUrl).hostname, /(^|\.)[a-z]+\.gov\.bd$/);
+      assert.ok(c.office);
+      assert.ok(c.note);
+    }
+  }
+});
+test("mailto preserves Bangla and rejects recipient/header injection", () => {
+  assert.equal(complaintMailto("bad\r\nBcc:evil@example.com", "text"), null);
+  assert.equal(isEmail("a@example.com,b@example.com"), false);
+  const url = complaintMailto(
+    "info@dncc.gov.bd",
+    "বাংলা লেখা & newline\nদ্বিতীয়",
+  );
+  assert.ok(url.startsWith("mailto:info%40dncc.gov.bd?"));
+  assert.equal(
+    new URLSearchParams(url.split("?")[1]).get("body"),
+    "বাংলা লেখা & newline\nদ্বিতীয়",
+  );
+});
+test("directory staleness is based on review date, not a claim of delivery", () => {
+  assert.equal(
+    contactIsStale("2026-10-12", new Date("2026-10-12T12:00:00Z")),
+    false,
+  );
+  assert.equal(
+    contactIsStale("2026-10-12", new Date("2027-02-12T12:00:00Z")),
+    true,
+  );
+});
+test("native backend accepts only a non-secret public HTTPS origin", () => {
+  assert.equal(
+    normalizeBackendUrl(" https://app.example.com/ "),
+    "https://app.example.com",
+  );
+  assert.equal(normalizeBackendUrl(""), "");
+  for (const url of [
+    "http://app.example.com",
+    "https://localhost",
+    "https://127.0.0.1",
+    "https://a:b@app.example.com",
+    "https://app.example.com/api",
+    "https://app.example.com?key=secret",
+    "not a url",
+  ])
+    assert.throws(() => normalizeBackendUrl(url));
+});

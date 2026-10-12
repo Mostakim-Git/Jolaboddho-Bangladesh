@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+node_modules
+dist
+android
+image-search
+evaluation/images
+evaluation/runs
+*.jks
+*.keystore

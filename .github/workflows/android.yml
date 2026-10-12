@@ -1,0 +1,72 @@
+name: Android APK
+on:
+  push:
+    branches: [main, "arena/**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - name: Use the runner's preinstalled Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0' > sdk-setup.log 2>&1 || { tail -n 25 sdk-setup.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+      - run: npm ci
+      - run: npm test
+      - run: npm run icons
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.JOLABADDHO_BACKEND_URL }}
+      - run: npx cap sync android
+      - name: Build installable debug APK and lint Android app
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :app:lintDebug --no-daemon > gradle-build.log 2>&1 || { tail -n 45 gradle-build.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jolabaddho-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-lint-report
+          path: android/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+      - name: Enable emulator hardware acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Android emulator demo smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon > device-test.log 2>&1 || { tail -n 35 device-test.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+      - name: Surface instrumentation failures in check annotations
+        if: always()
+        run: python3 scripts/report-android-tests.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-device-test-results
+          path: android/app/build/reports/androidTests/
+          if-no-files-found: ignore
