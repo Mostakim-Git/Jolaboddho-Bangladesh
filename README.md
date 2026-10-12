@@ -8,9 +8,9 @@ Supports SDG **6** (Clean Water and Sanitation), **11** (Sustainable Cities and 
 
 ## Download and verification
 
-[Download the Android test APK (ZIP)](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912/artifacts/11740379282) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912) · [Exact verification and pending gates](docs/VERIFICATION.md)
+[Latest release APK](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/releases) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912) · [Exact verification and pending gates](docs/VERIFICATION.md)
 
-The APK is debug-signed and the artifact expires 11 November 2026. Unzip and install `app-debug.apk`. **Live Gemini features require your deployed HTTPS backend and a fresh private key**; this is not a ready-to-use hosted production service.
+Push a version tag to publish a permanent release with the APK and a SHA-256 checksum; see [Publishing a GitHub Release](docs/ANDROID.md#publishing-a-github-release). Release APKs are currently **debug-signed** until a signing keystore is added to repository secrets. If your browser saves the APK as a ZIP, unzip it first, then install `app-debug.apk`. **Live Gemini features require your deployed HTTPS backend and a fresh private key**; this is not a ready-to-use hosted production service.
 
 ## Run locally
 
@@ -33,11 +33,14 @@ Open the Vite URL on port **5173**. The API runs on **3001**. The dev server pro
 
 ### Configuration
 
-| Variable         | Default            | Purpose                                                        |
-| ---------------- | ------------------ | -------------------------------------------------------------- |
-| `GEMINI_API_KEY` | unset              | Server-only Google Gemini API key                              |
-| `GEMINI_MODEL`   | `gemini-2.5-flash` | Model supporting image input and structured JSON output        |
-| `PORT`           | `3001`             | Express port; keep 3001 for the default Vite development proxy |
+| Variable            | Default            | Purpose                                                        |
+| ------------------- | ------------------ | -------------------------------------------------------------- |
+| `GEMINI_API_KEY`    | unset              | Server-only Google Gemini API key                              |
+| `GEMINI_MODEL`      | `gemini-3.8-flash` | Model supporting image input and structured JSON output        |
+| `GEMINI_TIMEOUT_MS` | `45000`            | Per-attempt timeout for one Gemini request                      |
+| `PORT`              | `3001`             | Express port; keep 3001 for the default Vite development proxy |
+
+`gemini-2.5-flash` was the earlier default and is **retired by Google on 20 October 2026**, so the default is now the current stable Flash model. Point `GEMINI_MODEL` at any model that accepts image input and structured JSON output. A transient `429`/`5xx` response is retried up to three times with a short backoff; a key or quota error fails immediately with a friendly message, and the raw provider error is logged server-side only.
 
 Never use a `VITE_` prefix for the API key. `.env` files are Git-ignored. Do not put credentials into the browser, screenshots, or source control. There is no need to paste credentials into a chat.
 

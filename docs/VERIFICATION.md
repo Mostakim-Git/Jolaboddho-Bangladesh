@@ -25,6 +25,8 @@
 - **Real-photo Gemini accuracy**: zero live model evaluations, no measured accuracy, no trained model weights. Nine online candidates were visually reviewed; their labels/rights are not independently approved. See [evaluation/STATUS.md](../evaluation/STATUS.md). Classification metrics do not by themselves validate severity, factual evidence, affected groups or confidence calibration; these also need independent review.
 - Physical-phone camera/GPS/permission-denial, native share/mail-app behavior, real mailbox delivery, live forecast cross-check, novice-user timing, and the requested real-photo acceptance gate.
 - Hydrological validation of the rule-based risk score. It remains advisory, not an official warning or validated flood prediction.
-- Public production deployment, release signing/store publication and demonstration reel.
+- Public production deployment and a demonstration reel.
+- **Release signing with a long-term certificate.** A tag-triggered **Release APK** workflow now publishes a GitHub Release with the APK and a `.sha256` checksum, and it is wired to sign with a release keystore supplied through repository secrets. Until those four secrets exist, the published APK stays **debug-signed**, and it is still not a Play Store release. See [ANDROID.md](ANDROID.md).
+- Re-verification of the model migration: the default model moved from the retiring `gemini-2.5-flash` to `gemini-3.8-flash`, but no live Gemini request has been made from this network-restricted environment, so structured-output compatibility with the new model remains unverified.
 
 No government-system submission is performed. The citizen confirms the jurisdiction, edits the letter and chooses whether to send it in their own mail/share app.

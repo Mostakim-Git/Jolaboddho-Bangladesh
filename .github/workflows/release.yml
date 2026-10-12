@@ -1,0 +1,161 @@
+name: Release APK
+
+# Publishing is deliberate: push a version tag (for example v1.1.0) to build the
+# APK and attach it to a GitHub Release. The artifact then stays downloadable
+# after the Actions artifacts expire. The Android APK workflow already covers
+# lint and the emulator smoke test on every push, so this workflow stays focused
+# on producing and verifying the published artifact.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
+      - name: Use the runner's preinstalled Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-35' 'build-tools;35.0.0' > sdk-setup.log 2>&1 || { tail -n 25 sdk-setup.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+      - run: npm ci
+      - run: npm test
+      - run: npm run icons
+      - name: Build the web bundle
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.JOLABADDHO_BACKEND_URL }}
+      - run: npx cap sync android
+      - name: Build, verify and name the APK
+        id: apk
+        working-directory: android
+        env:
+          JOLABADDHO_KEYSTORE_BASE64: ${{ secrets.JOLABADDHO_KEYSTORE_BASE64 }}
+          JOLABADDHO_KEYSTORE_PASSWORD: ${{ secrets.JOLABADDHO_KEYSTORE_PASSWORD }}
+          JOLABADDHO_KEY_ALIAS: ${{ secrets.JOLABADDHO_KEY_ALIAS }}
+          JOLABADDHO_KEY_PASSWORD: ${{ secrets.JOLABADDHO_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+
+          # Version metadata comes from the tag so the APK and the release agree.
+          if [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            VERSION_NAME="${GITHUB_REF_NAME#v}"
+          else
+            VERSION_NAME="$(node -p "require('../package.json').version")"
+          fi
+          VERSION_CODE="${GITHUB_RUN_NUMBER}"
+          export JOLABADDHO_VERSION_NAME="$VERSION_NAME"
+          export JOLABADDHO_VERSION_CODE="$VERSION_CODE"
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+
+          # A keystore outside the workspace, so it can never be picked up by a
+          # later artifact upload. Falls back to a debug test build when the
+          # signing secrets are not configured yet.
+          if [[ -n "${JOLABADDHO_KEYSTORE_BASE64:-}" ]]; then
+            KEYSTORE_PATH="$RUNNER_TEMP/jolabaddho-release.jks"
+            printf '%s' "$JOLABADDHO_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_PATH"
+            export JOLABADDHO_KEYSTORE_PATH="$KEYSTORE_PATH"
+            BUILD_KIND="release"
+            GRADLE_TASK=":app:assembleRelease"
+            APK_IN="app/build/outputs/apk/release/app-release.apk"
+          else
+            BUILD_KIND="debug"
+            GRADLE_TASK=":app:assembleDebug"
+            APK_IN="app/build/outputs/apk/debug/app-debug.apk"
+            echo "::warning::No release keystore configured; publishing a debug-signed test build instead."
+          fi
+          echo "build_kind=$BUILD_KIND" >> "$GITHUB_OUTPUT"
+
+          ./gradlew "$GRADLE_TASK" --no-daemon > gradle-release.log 2>&1 || { tail -n 45 gradle-release.log | while IFS= read -r line; do echo "::error::$line"; done; exit 1; }
+
+          test -s "$APK_IN" || { echo "::error::The expected APK was not produced at $APK_IN"; exit 1; }
+
+          # Assert the artifact really carries the tag's version before publishing.
+          BADGING=""
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          for BADGING_TOOL in "$BUILD_TOOLS/aapt2" "$BUILD_TOOLS/aapt"; do
+            [[ -x "$BADGING_TOOL" ]] || continue
+            BADGING="$("$BADGING_TOOL" dump badging "$APK_IN" 2>/dev/null || true)"
+            [[ "$BADGING" == *"package:"* ]] && break || BADGING=""
+          done
+          if [[ -n "$BADGING" ]]; then
+            echo "${BADGING%%$'\n'*}"
+            grep -q "versionName='$VERSION_NAME'" <<<"$BADGING" || { echo "::error::APK versionName does not match $VERSION_NAME"; exit 1; }
+            grep -q "versionCode='$VERSION_CODE'" <<<"$BADGING" || { echo "::error::APK versionCode does not match $VERSION_CODE"; exit 1; }
+          else
+            echo "::warning::Could not read APK badging; skipping the version assertion."
+          fi
+
+          APK_OUT="$RUNNER_TEMP/jolabaddho-$VERSION_NAME-$BUILD_KIND.apk"
+          cp "$APK_IN" "$APK_OUT"
+          cd "$RUNNER_TEMP"
+          sha256sum "$(basename "$APK_OUT")" > "$(basename "$APK_OUT").sha256"
+          echo "apk_path=$APK_OUT" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$(basename "$APK_OUT")" >> "$GITHUB_OUTPUT"
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_PATH: ${{ steps.apk.outputs.apk_path }}
+          APK_NAME: ${{ steps.apk.outputs.apk_name }}
+          VERSION_NAME: ${{ steps.apk.outputs.version_name }}
+          BUILD_KIND: ${{ steps.apk.outputs.build_kind }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v${VERSION_NAME}"
+          fi
+          if [[ "$BUILD_KIND" == "release" ]]; then
+            BUILD_NOTE="Signed with the release keystore supplied through repository secrets."
+          else
+            BUILD_NOTE="**Debug-signed test build.** It is not a Play Store release and is not signed with a long-term release certificate. CI debug signatures can differ between runs, so uninstall an older debug build if Android refuses an update."
+          fi
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          **Jolabaddho? · জলাবদ্ধ?** — report waterlogging, understand local rain risk, and create an editable Bangla complaint for your city corporation.
+
+          - Version: \`${VERSION_NAME}\` (versionCode \`${{ steps.apk.outputs.version_code }}\`)
+          - Commit: \`${{ github.sha }}\`
+          - Build: ${BUILD_NOTE}
+
+          ### Install
+          1. Download the APK asset below (Android 6.0+), or unzip it if your browser saved it as a ZIP.
+          2. Allow installation from this source, then open the app.
+
+          Live Gemini photo analysis and complaint drafting need a deployed Jolabaddho backend that holds its own Gemini API key; a phone app cannot safely carry that secret. Without a backend the app still provides demo mode, the sourced authority directory, and client-side Open-Meteo weather.
+
+          ### Verify the download
+          Compare your file against the \`.sha256\` asset, for example \`sha256sum -c jolabaddho-${VERSION_NAME}-${BUILD_KIND}.apk.sha256\`.
+
+          This is an independent citizen tool, not a government reporting portal or an official flood-warning service. See [\`docs/VERIFICATION.md\`](https://github.com/${{ github.repository }}/blob/main/docs/VERIFICATION.md) for exactly what is and is not verified.
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK_PATH" "$APK_PATH.sha256" --clobber
+          else
+            gh release create "$TAG" "$APK_PATH" "$APK_PATH.sha256" \
+              --title "Jolabaddho? ${TAG}" \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --verify-tag
+          fi
+          echo "### Released $TAG ($BUILD_KIND build)" >> "$GITHUB_STEP_SUMMARY"

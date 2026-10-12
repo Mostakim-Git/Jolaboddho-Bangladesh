@@ -19,6 +19,35 @@ The **Android APK** workflow builds a debug-signed APK, runs Android lint, and t
 
 A debug APK is for direct testing. It is **not a Play Store release** and is not signed with your long-term release certificate. CI debug signing keys can differ between runs; uninstall an older debug build if Android refuses an update because signatures differ. Before public release, use your own protected signing/upload key, a versioning policy, privacy policy and physical-device testing. Never commit a keystore.
 
+## Publishing a GitHub Release
+
+Pushing a version tag builds the APK, checks that the packaged `versionName`/`versionCode` match the tag, and attaches the APK plus a `.sha256` checksum to a **GitHub Release**, so the download no longer expires with the 30-day Actions artifacts:
+
+```sh
+git tag v1.1.0 && git push origin v1.1.0
+```
+
+The version comes from the tag; `versionCode` uses the workflow run number. A `workflow_dispatch` run on the **Release APK** workflow publishes the current `package.json` version instead.
+
+### Optional: sign releases with your own key
+
+`assembleRelease` is signed only when a keystore is supplied through CI secrets, so local builds need nothing. Without them the release workflow publishes a **debug-signed** build and says so in the release notes. To sign properly, generate a keystore locally, keep it private, and add four repository secrets (**Settings → Secrets and variables → Actions**):
+
+```sh
+keytool -genkeypair -v -keystore jolabaddho-release.jks -alias jolabaddho \
+  -keyalg RSA -keysize 4096 -validity 10000
+base64 -w0 jolabaddho-release.jks > keystore.b64   # paste this file into the secret
+```
+
+| Secret                            | Value                                          |
+| --------------------------------- | ---------------------------------------------- |
+| `JOLABADDHO_KEYSTORE_BASE64`      | base64 of the `.jks` file                      |
+| `JOLABADDHO_KEYSTORE_PASSWORD`    | keystore password                              |
+| `JOLABADDHO_KEY_ALIAS`            | key alias, for example `jolabaddho`            |
+| `JOLABADDHO_KEY_PASSWORD`         | key password                                   |
+
+The keystore is written to the runner's temporary directory, never into the checkout. Losing this key means you can never update an already-installed build under the same signature, so back it up privately. A Play Store upload additionally needs an AAB (`:app:bundleRelease`) and an upload key — this repository does not publish to Play.
+
 ## Connect real AI — required before calling it end-to-end live
 
 A standalone Android APK cannot safely contain a Gemini API secret and cannot run the Node server on a citizen's phone. You need a deployed backend:

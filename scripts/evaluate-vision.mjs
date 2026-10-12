@@ -144,7 +144,7 @@ if (checkOnly) {
   }
   const report = {
     startedAt,
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
     promptVersion: VISION_PROMPT_VERSION,
     promptSha256: createHash("sha256").update(VISION_PROMPT).digest("hex"),
     split,

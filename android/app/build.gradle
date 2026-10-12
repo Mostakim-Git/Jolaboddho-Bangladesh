@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+// Release signing is opt-in. It activates only when a keystore is supplied through
+// environment variables (CI secrets), so local and CI builds keep working without
+// one. Never commit a keystore; *.jks and *.keystore are Git-ignored.
+def releaseKeystorePath = System.getenv("JOLABADDHO_KEYSTORE_PATH")
+def releaseKeystoreAvailable = releaseKeystorePath && file(releaseKeystorePath).exists()
+
 android {
     namespace "bd.jolabaddho.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +13,9 @@ android {
         applicationId "bd.jolabaddho.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Tagged release builds pass the matching version in; local builds use the default.
+        versionCode (System.getenv("JOLABADDHO_VERSION_CODE") ?: "2").toInteger()
+        versionName System.getenv("JOLABADDHO_VERSION_NAME") ?: "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +23,23 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseKeystoreAvailable) {
+                storeFile file(releaseKeystorePath)
+                storePassword System.getenv("JOLABADDHO_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("JOLABADDHO_KEY_ALIAS")
+                keyPassword System.getenv("JOLABADDHO_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseKeystoreAvailable) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
