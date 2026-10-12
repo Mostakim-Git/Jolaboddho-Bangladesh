@@ -1,0 +1,8 @@
+{
+  "appId": "bd.jolabaddho.app",
+  "appName": "Jolabaddho?",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false },
+  "plugins": { "Camera": { "presentationStyle": "fullscreen" } }
+}

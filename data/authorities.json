@@ -1,0 +1,264 @@
+[
+  {
+    "id": "dncc",
+    "name": "Dhaka North City Corporation",
+    "nameBn": "ঢাকা উত্তর সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "info@dncc.gov.bd",
+        "office": "General contact",
+        "sourceUrl": "https://dncc.gov.bd/pages/static-pages/6922df76933eb65569e2224e",
+        "sourceResultId": 1,
+        "note": "General corporation contact, not a confirmed drainage complaint queue."
+      }
+    ]
+  },
+  {
+    "id": "dscc",
+    "name": "Dhaka South City Corporation",
+    "nameBn": "ঢাকা দক্ষিণ সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "info@dscc.gov.bd",
+        "office": "General contact",
+        "sourceUrl": "https://dscc.portal.gov.bd/site/page/f10f83c6-56b3-47ce-a91e-1bd7e54e180f",
+        "sourceResultId": 1,
+        "note": "Published emergency/contact page; not proof of inbox monitoring."
+      },
+      {
+        "email": "cwmo@dscc.gov.bd",
+        "office": "Chief Waste Management Officer",
+        "sourceUrl": "https://dscc.gov.bd/pages/officers/",
+        "sourceResultId": 5,
+        "note": "Waste-management department contact; choose for visible rubbish issues only after reviewing jurisdiction."
+      },
+      {
+        "email": "ce@dscc.gov.bd",
+        "office": "Chief Engineer",
+        "sourceUrl": "https://dscc.gov.bd/site/view/officer_list_all",
+        "sourceResultId": 3,
+        "note": "Engineering office listed by the corporation; no promise of direct complaint registration."
+      }
+    ]
+  },
+  {
+    "id": "ccc",
+    "name": "Chattogram City Corporation",
+    "nameBn": "চট্টগ্রাম সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "info@ccc.gov.bd",
+        "office": "General contact",
+        "sourceUrl": "https://jobccc.gov.bd/comment",
+        "sourceResultId": 4,
+        "note": "Corporation contact in its official job portal footer; not the recruitment help address."
+      },
+      {
+        "email": "xen.cdv6@ccc.gov.bd",
+        "office": "Drainage & Disaster Management Engineer — zones 1, 2, 3",
+        "sourceUrl": "https://ccc.gov.bd/site/view/officer_list/কর্মকর্তাবৃন্দ",
+        "sourceResultId": 2,
+        "note": "The official listing limits this drainage role to zones 1–3. Do not use it for another zone without confirmation."
+      }
+    ]
+  },
+  {
+    "id": "kcc",
+    "name": "Khulna City Corporation",
+    "nameBn": "খুলনা সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "ceo.kcc.kln@gmail.com",
+        "office": "Chief Executive Officer office",
+        "sourceUrl": "https://khulnacity.portal.gov.bd/site/officer_list/3d97cbfc-43cf-4164-a782-24bdba488382/-",
+        "sourceResultId": 4,
+        "note": "Gmail address published by the official corporation portal; general administrative escalation."
+      },
+      {
+        "email": "ohiduzzaman144@gmail.com",
+        "office": "Conservancy Officer",
+        "sourceUrl": "https://khulnacity.gov.bd/pages/officers",
+        "sourceResultId": 2,
+        "note": "Public officer work contact. Verify the officer assignment before sending personal information."
+      }
+    ]
+  },
+  {
+    "id": "rcc",
+    "name": "Rajshahi City Corporation",
+    "nameBn": "রাজশাহী সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "xen.rcc@gmail.com",
+        "office": "Executive Engineer (Development 1)",
+        "sourceUrl": "https://erajshahi.portal.gov.bd/pages/officers/",
+        "sourceResultId": 4,
+        "note": "Public engineering work contact; not a dedicated complaint inbox."
+      },
+      {
+        "email": "prorcc.gov.bd@gmail.com",
+        "office": "Public Relations Officer",
+        "sourceUrl": "https://erajshahi.portal.gov.bd/pages/officers/",
+        "sourceResultId": 4,
+        "note": "General enquiries/escalation; Gmail is the exact address in the official listing."
+      }
+    ]
+  },
+  {
+    "id": "scc",
+    "name": "Sylhet City Corporation",
+    "nameBn": "সিলেট সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "ce@scc.gov.bd",
+        "office": "Chief Engineer",
+        "sourceUrl": "https://scc.gov.bd/pages/officers/",
+        "sourceResultId": 5,
+        "note": "Engineering department contact; jurisdiction and delivery need confirmation."
+      },
+      {
+        "email": "cwmo@scc.gov.bd",
+        "office": "Chief Waste Management Officer",
+        "sourceUrl": "https://scc.gov.bd/pages/officers/",
+        "sourceResultId": 5,
+        "note": "Waste-management department work contact."
+      }
+    ]
+  },
+  {
+    "id": "bcc",
+    "name": "Barishal City Corporation",
+    "nameBn": "বরিশাল সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "administrator@barishalcity.gov.bd",
+        "office": "Administrator — complaints and suggestions",
+        "sourceUrl": "https://barishalcity.gov.bd/",
+        "sourceResultId": 1,
+        "note": "The official homepage explicitly invites complaints and suggestions to this address."
+      },
+      {
+        "email": "contact@barishalcity.gov.bd",
+        "office": "General contact",
+        "sourceUrl": "https://barishalcity.gov.bd/info/যোগাযোগ",
+        "sourceResultId": 2,
+        "note": "General contact page, published 5 April 2024; confirm current monitoring."
+      }
+    ]
+  },
+  {
+    "id": "rpcc",
+    "name": "Rangpur City Corporation",
+    "nameBn": "রংপুর সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "se@rpcc.gov.bd",
+        "office": "Superintending Engineer",
+        "sourceUrl": "https://rpcc.gov.bd/site/view/officer_list/nolink/-",
+        "sourceResultId": 3,
+        "note": "Role address in official officer list. Page carries older publication metadata; recheck before sending."
+      }
+    ]
+  },
+  {
+    "id": "gcc",
+    "name": "Gazipur City Corporation",
+    "nameBn": "গাজীপুর সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "ce@gcc.gov.bd",
+        "office": "Chief Engineer office",
+        "sourceUrl": "https://gcc.gov.bd/site/view/officer_list_all",
+        "sourceResultId": 3,
+        "note": "Role address in official list; named incumbent is blank. Confirm routing before sending."
+      },
+      {
+        "email": "ceo@gcc.gov.bd",
+        "office": "Chief Executive Officer office",
+        "sourceUrl": "https://gcc.portal.gov.bd/site/page/1333787d-43b2-467e-97ae-13267c4f3f3d",
+        "sourceResultId": 5,
+        "note": "General administrative contact published in official page footer, not a dedicated drainage queue."
+      }
+    ]
+  },
+  {
+    "id": "ncc",
+    "name": "Narayanganj City Corporation",
+    "nameBn": "নারায়ণগঞ্জ সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "administrator@ncc.gov.bd",
+        "office": "Administrator office",
+        "sourceUrl": "https://ncc.gov.bd/pages/officers/",
+        "sourceResultId": 4,
+        "note": "General administrative escalation. No dedicated drainage mailbox was confirmed in this review."
+      }
+    ]
+  },
+  {
+    "id": "cocc",
+    "name": "Cumilla City Corporation",
+    "nameBn": "কুমিল্লা সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "coccbd@gmail.com",
+        "office": "Chief Executive Officer office",
+        "sourceUrl": "https://cocc.portal.gov.bd/pages/officers/",
+        "sourceResultId": 3,
+        "note": "Exact Gmail address in official officer listing; general corporation office."
+      },
+      {
+        "email": "mainuddin.cocc@gmail.com",
+        "office": "Executive Engineer",
+        "sourceUrl": "https://cocc.portal.gov.bd/pages/officers/",
+        "sourceResultId": 3,
+        "note": "Public work contact in official listing; recheck officer assignment."
+      }
+    ]
+  },
+  {
+    "id": "mcc",
+    "name": "Mymensingh City Corporation",
+    "nameBn": "ময়মনসিংহ সিটি কর্পোরেশন",
+    "reviewedOn": "2026-10-12",
+    "verification": "official-publication-only",
+    "contacts": [
+      {
+        "email": "se@mcc.gov.bd",
+        "office": "Superintending Engineer (Civil)",
+        "sourceUrl": "https://mcc.gov.bd/pages/officers",
+        "sourceResultId": 3,
+        "note": "Civil engineering role address, not a confirmed complaint-registration endpoint."
+      },
+      {
+        "email": "sec@mcc.gov.bd",
+        "office": "Secretary office",
+        "sourceUrl": "https://mcc.gov.bd/pages/officers",
+        "sourceResultId": 3,
+        "note": "General administrative contact."
+      }
+    ]
+  }
+]

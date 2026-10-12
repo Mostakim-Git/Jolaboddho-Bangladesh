@@ -1,0 +1,34 @@
+# City corporation contact evidence
+
+Reviewed **12 October 2026**. These are **addresses published on official government websites**, not guessed names. Search-index excerpts supplied the evidence where dynamically rendered pages could not be extracted. This review does **not** verify inbox delivery, current monitoring, ward boundaries, or that a general office accepts drainage complaints. No email was sent. The app links to the exact source and lets the citizen confirm or correct the recipient.
+
+Coverage: all 12 city corporations currently selectable in this app; not every ward/officer mailbox in Bangladesh. No automatic geolocation-to-jurisdiction inference. Some officers use Gmail/Yahoo addresses published for work; they are not invented substitutes.
+
+| Corporation | Email | Published office / scope | Official evidence | Caveat |
+|---|---|---|---|---|
+| Dhaka North City Corporation | `info@dncc.gov.bd` | General contact | [1](https://dncc.gov.bd/pages/static-pages/6922df76933eb65569e2224e) | General corporation contact, not a confirmed drainage complaint queue. |
+| Dhaka South City Corporation | `info@dscc.gov.bd` | General contact | [1](https://dscc.portal.gov.bd/site/page/f10f83c6-56b3-47ce-a91e-1bd7e54e180f) | Published emergency/contact page; not proof of inbox monitoring. |
+| Dhaka South City Corporation | `cwmo@dscc.gov.bd` | Chief Waste Management Officer | [5](https://dscc.gov.bd/pages/officers/) | Waste-management department contact; choose for visible rubbish issues only after reviewing jurisdiction. |
+| Dhaka South City Corporation | `ce@dscc.gov.bd` | Chief Engineer | [3](https://dscc.gov.bd/site/view/officer_list_all) | Engineering office listed by the corporation; no promise of direct complaint registration. |
+| Chattogram City Corporation | `info@ccc.gov.bd` | General contact | [4](https://jobccc.gov.bd/comment) | Corporation contact in its official job portal footer; not the recruitment help address. |
+| Chattogram City Corporation | `xen.cdv6@ccc.gov.bd` | Drainage & Disaster Management Engineer — zones 1, 2, 3 | [2](https://ccc.gov.bd/site/view/officer_list/কর্মকর্তাবৃন্দ) | The official listing limits this drainage role to zones 1–3. Do not use it for another zone without confirmation. |
+| Khulna City Corporation | `ceo.kcc.kln@gmail.com` | Chief Executive Officer office | [4](https://khulnacity.portal.gov.bd/site/officer_list/3d97cbfc-43cf-4164-a782-24bdba488382/-) | Gmail address published by the official corporation portal; general administrative escalation. |
+| Khulna City Corporation | `ohiduzzaman144@gmail.com` | Conservancy Officer | [2](https://khulnacity.gov.bd/pages/officers) | Public officer work contact. Verify the officer assignment before sending personal information. |
+| Rajshahi City Corporation | `xen.rcc@gmail.com` | Executive Engineer (Development 1) | [4](https://erajshahi.portal.gov.bd/pages/officers/) | Public engineering work contact; not a dedicated complaint inbox. |
+| Rajshahi City Corporation | `prorcc.gov.bd@gmail.com` | Public Relations Officer | [4](https://erajshahi.portal.gov.bd/pages/officers/) | General enquiries/escalation; Gmail is the exact address in the official listing. |
+| Sylhet City Corporation | `ce@scc.gov.bd` | Chief Engineer | [5](https://scc.gov.bd/pages/officers/) | Engineering department contact; jurisdiction and delivery need confirmation. |
+| Sylhet City Corporation | `cwmo@scc.gov.bd` | Chief Waste Management Officer | [5](https://scc.gov.bd/pages/officers/) | Waste-management department work contact. |
+| Barishal City Corporation | `administrator@barishalcity.gov.bd` | Administrator — complaints and suggestions | [1](https://barishalcity.gov.bd/) | The official homepage explicitly invites complaints and suggestions to this address. |
+| Barishal City Corporation | `contact@barishalcity.gov.bd` | General contact | [2](https://barishalcity.gov.bd/info/যোগাযোগ) | General contact page, published 5 April 2024; confirm current monitoring. |
+| Rangpur City Corporation | `se@rpcc.gov.bd` | Superintending Engineer | [3](https://rpcc.gov.bd/site/view/officer_list/nolink/-) | Role address in official officer list. Page carries older publication metadata; recheck before sending. |
+| Gazipur City Corporation | `ce@gcc.gov.bd` | Chief Engineer office | [3](https://gcc.gov.bd/site/view/officer_list_all) | Role address in official list; named incumbent is blank. Confirm routing before sending. |
+| Gazipur City Corporation | `ceo@gcc.gov.bd` | Chief Executive Officer office | [5](https://gcc.portal.gov.bd/site/page/1333787d-43b2-467e-97ae-13267c4f3f3d) | General administrative contact published in official page footer, not a dedicated drainage queue. |
+| Narayanganj City Corporation | `administrator@ncc.gov.bd` | Administrator office | [4](https://ncc.gov.bd/pages/officers/) | General administrative escalation. No dedicated drainage mailbox was confirmed in this review. |
+| Cumilla City Corporation | `coccbd@gmail.com` | Chief Executive Officer office | [3](https://cocc.portal.gov.bd/pages/officers/) | Exact Gmail address in official officer listing; general corporation office. |
+| Cumilla City Corporation | `mainuddin.cocc@gmail.com` | Executive Engineer | [3](https://cocc.portal.gov.bd/pages/officers/) | Public work contact in official listing; recheck officer assignment. |
+| Mymensingh City Corporation | `se@mcc.gov.bd` | Superintending Engineer (Civil) | [3](https://mcc.gov.bd/pages/officers) | Civil engineering role address, not a confirmed complaint-registration endpoint. |
+| Mymensingh City Corporation | `sec@mcc.gov.bd` | Secretary office | [3](https://mcc.gov.bd/pages/officers) | General administrative contact. |
+
+## Maintenance
+
+Recheck the linked page before sending and refresh this directory at least every 90 days. `reviewedOn` is our evidence-review date, **not** the source update date. Public pages can be stale. The app warns after 90 days. Prefer a published role address over an individual address when possible. Never silently rewrite an address or infer a recipient from an email naming pattern. Do not bulk-send test mail to these offices.
