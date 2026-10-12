@@ -8,9 +8,11 @@ Supports SDG **6** (Clean Water and Sanitation), **11** (Sustainable Cities and 
 
 ## Download and verification
 
-[Latest release APK](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/releases) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912) · [Exact verification and pending gates](docs/VERIFICATION.md)
+[Latest release](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/releases) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38252682326) · [Exact verification and pending gates](docs/VERIFICATION.md)
 
-Push a version tag to publish a permanent release with the APK and a SHA-256 checksum; see [Publishing a GitHub Release](docs/ANDROID.md#publishing-a-github-release). Release APKs are currently **debug-signed** until a signing keystore is added to repository secrets. If your browser saves the APK as a ZIP, unzip it first, then install `app-debug.apk`. **Live Gemini features require your deployed HTTPS backend and a fresh private key**; this is not a ready-to-use hosted production service.
+Download the APK and its `.sha256` checksum from the latest release, then install it. Release APKs are currently **debug-signed** until a signing keystore is added to repository secrets. Push a version tag to publish a new one; see [Publishing a GitHub Release](docs/ANDROID.md#publishing-a-github-release).
+
+The APK is pre-pointed at the deployed backend, so **live Gemini analysis and drafting work without any first-run setup** — provided that deployment holds its own `GEMINI_API_KEY`. There is no demo or sample fallback: if the AI service is unavailable, the app says so. Check the deployment with `curl https://jolabaddho-waterlogging-reporter.ai.studio/api/health`.
 
 ## Deployed backend
 
