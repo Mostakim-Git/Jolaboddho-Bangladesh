@@ -121,7 +121,13 @@ jobs:
           VERSION_NAME: ${{ steps.apk.outputs.version_name }}
           BUILD_KIND: ${{ steps.apk.outputs.build_kind }}
         run: |
-          set -euo pipefail
+          # No `set -e`: every gh call is checked explicitly so the real error is
+          # reported as an annotation, which is readable without the job log.
+          set -uo pipefail
+          fail() {
+            echo "::error::$1"
+            exit 1
+          }
           if [[ "${GITHUB_REF_NAME}" == v* ]]; then
             TAG="${GITHUB_REF_NAME}"
           else
@@ -150,36 +156,47 @@ jobs:
 
           This is an independent citizen tool, not a government reporting portal or an official flood-warning service. See [\`docs/VERIFICATION.md\`](https://github.com/${{ github.repository }}/blob/main/docs/VERIFICATION.md) for exactly what is and is not verified.
           EOF
-          # gh attaches assets while the release is still a draft and only then
-          # publishes it, so an interrupted upload leaves a draft behind. Look
-          # for an existing release (draft or published) before creating one, so
-          # a retry reuses it instead of failing on the duplicate tag.
-          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -qx "$TAG"; then
+          echo "gh $(gh --version | head -n1)"
+          echo "target tag: $TAG, asset: $APK_NAME"
+          ls -l "$APK_PATH" || fail "The staged APK is missing at $APK_PATH."
+
+          # gh attaches assets to a draft release and only publishes afterwards,
+          # so an interrupted upload leaves a draft behind. Reuse whatever
+          # release already carries this tag instead of failing on a duplicate.
+          existing=""
+          if ! listing="$(gh release list --limit 100 --json tagName,isDraft --jq '.[] | "\(.tagName)\t\(.isDraft)"' 2>&1)"; then
+            fail "gh release list failed: $(printf '%s' "$listing" | tr '\n' ' ')"
+          fi
+          existing="$(printf '%s\n' "$listing" | awk -F'\t' -v t="$TAG" '$1==t {print $1}')"
+          if [[ -n "$existing" ]]; then
             echo "Release $TAG already exists; reusing it."
           else
-            gh release create "$TAG" \
-              --title "Jolabaddho? ${TAG}" \
-              --notes-file "$RUNNER_TEMP/release-notes.md" \
-              --verify-tag \
-              --draft
+            if ! out="$(gh release create "$TAG" \
+                  --title "Jolabaddho? ${TAG}" \
+                  --notes-file "$RUNNER_TEMP/release-notes.md" \
+                  --verify-tag \
+                  --draft 2>&1)"; then
+              fail "gh release create failed: $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+            fi
           fi
 
           # An asset upload can fail on a transient network error; retry before
           # giving up, and surface the failure as an annotation if it persists.
           for attempt in 1 2 3; do
-            if gh release upload "$TAG" "$APK_PATH" "$APK_PATH.sha256" --clobber; then
+            if out="$(gh release upload "$TAG" "$APK_PATH" "$APK_PATH.sha256" --clobber 2>&1)"; then
               break
             fi
             if [[ "$attempt" == 3 ]]; then
-              echo "::error::Could not upload the release assets for $TAG after 3 attempts."
-              exit 1
+              fail "gh release upload failed for $TAG after 3 attempts: $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
             fi
             echo "::warning::Asset upload attempt $attempt failed; retrying."
             sleep $((attempt * 15))
           done
 
-          gh release edit "$TAG" \
-            --title "Jolabaddho? ${TAG}" \
-            --notes-file "$RUNNER_TEMP/release-notes.md" \
-            --draft=false
+          if ! out="$(gh release edit "$TAG" \
+                --title "Jolabaddho? ${TAG}" \
+                --notes-file "$RUNNER_TEMP/release-notes.md" \
+                --draft=false 2>&1)"; then
+            fail "gh release edit failed: $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+          fi
           echo "### Released $TAG ($BUILD_KIND build)" >> "$GITHUB_STEP_SUMMARY"
