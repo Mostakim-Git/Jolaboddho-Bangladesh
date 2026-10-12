@@ -23,10 +23,12 @@ public class WorkflowInstrumentedTest {
     private void waitFor(ActivityScenario<MainActivity> scenario, String condition) throws Exception {
         long until = System.currentTimeMillis() + 20000;
         do { if ("true".equals(js(scenario, condition))) return; Thread.sleep(150); } while (System.currentTimeMillis() < until);
-        fail("WebView condition failed: " + condition);
+        fail("WebView condition failed: " + condition + "; URL=" + js(scenario,"location.href") + "; visible screen=" + js(scenario,"document.body.innerText.slice(0,1800)"));
     }
     private void click(ActivityScenario<MainActivity> scenario, String text) throws Exception {
-        js(scenario, "(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='" + text + "');if(b)b.click();})()");
+        String selector = "[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='" + text + "' && !b.disabled && b.offsetParent!==null)";
+        waitFor(scenario, "!!(" + selector + ")");
+        assertEquals("Button click failed: " + text, "true", js(scenario, "(()=>{const b=" + selector + ";if(!b)return false;b.click();return true;})()"));
     }
     @Test public void bundledAppOpensAndCompletesLabeledDemo() throws Exception {
         Context app = InstrumentationRegistry.getInstrumentation().getTargetContext();

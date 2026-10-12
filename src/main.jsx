@@ -33,11 +33,20 @@ import {
   Clock3,
 } from "lucide-react";
 import CityScene from "./CityScene";
-import authorities from '../data/authorities.json';
-import ContactPicker from './ContactPicker';
-import ServiceSettings from './ServiceSettings';
-import { complaintMailto, isEmail } from '../shared/contacts';
-import { isNative, apiEndpoint, takeNativePhoto, locate, writeClipboard, shareText, emailNative, registerAndroidBack } from './platform';
+import authorities from "../data/authorities.json";
+import ContactPicker from "./ContactPicker";
+import ServiceSettings from "./ServiceSettings";
+import { complaintMailto, isEmail } from "../shared/contacts";
+import {
+  isNative,
+  apiEndpoint,
+  takeNativePhoto,
+  locate,
+  writeClipboard,
+  shareText,
+  emailNative,
+  registerAndroidBack,
+} from "./platform";
 import { prepareImage } from "./image";
 import {
   calculateRisk,
@@ -226,7 +235,7 @@ const readScreen = () =>
 function App() {
   const [screen, setScreen] = useState(readScreen);
   useEffect(registerAndroidBack, []);
-  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientAcknowledged, setRecipientAcknowledged] = useState(false);
   const screenRef = useRef();
   useEffect(() => {
@@ -282,9 +291,14 @@ function App() {
     modalClose = useRef();
   const risk = calculateRisk(analysis, weather);
   const recipient = authority === "other" ? otherAuthority.trim() : authority;
-  const contactEntry = authorities.find(a => a.nameBn === authority);
-  useEffect(() => { setRecipientEmail(contactEntry?.contacts[0]?.email || ''); setRecipientAcknowledged(false); }, [authority]);
-  const emailHref = recipientAcknowledged ? complaintMailto(recipientEmail, draft) : null;
+  const contactEntry = authorities.find((a) => a.nameBn === authority);
+  useEffect(() => {
+    setRecipientEmail(contactEntry?.contacts[0]?.email || "");
+    setRecipientAcknowledged(false);
+  }, [authority]);
+  const emailHref = recipientAcknowledged
+    ? complaintMailto(recipientEmail, draft)
+    : null;
 
   const clearDraft = () => {
     draftVersion.current++;
@@ -352,9 +366,19 @@ function App() {
     scrollTo("report");
   }
   async function takePhoto() {
-    if (!isNative) { camera.current.click(); return; }
-    try { const file = await takeNativePhoto(); await onFile(file); }
-    catch(e) { if (!/cancel|dismiss/i.test(e.message || '')) setPhotoError('Could not open the camera. Allow camera access or use Upload photo.'); }
+    if (!isNative) {
+      camera.current.click();
+      return;
+    }
+    try {
+      const file = await takeNativePhoto();
+      await onFile(file);
+    } catch (e) {
+      if (!/cancel|dismiss/i.test(e.message || ""))
+        setPhotoError(
+          "Could not open the camera. Allow camera access or use Upload photo.",
+        );
+    }
   }
   async function onFile(file) {
     if (!file) return;
@@ -535,7 +559,7 @@ function App() {
     setShareMessage("");
     if (demo || weather.source === "demo") {
       setDraft(
-        `বরাবর\n${recipient}\nওয়ার্ড কাউন্সিলর / পরিচ্ছন্নতা ও নিকাশি বিভাগ\nতারিখ: ${localDate()}\n\nবিষয়: জলাবদ্ধতার ঝুঁকি কমাতে নালা পরিদর্শন ও পরিষ্কারের আবেদন।\n\nমহোদয়/মহোদয়া,\n${location.label} এলাকায় (${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}) নমুনা পর্যবেক্ষণে নালার মুখে বর্জ্য এবং রাস্তার পাশে জমে থাকা পানি দেখানো হয়েছে। সমস্যার নমুনা তীব্রতা ৪/৫।\n\n${weather.source === "live" ? `Open-Meteo-এর সরাসরি সংগৃহীত পূর্বাভাস অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা রয়েছে (তথ্য সংগ্রহ: ${localTime(weather.fetchedAt)}, বাংলাদেশ সময়)। এটি পূর্বাভাস, পর্যবেক্ষণ নয়।` : `ডেমো আবহাওয়ার তথ্য অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা দেখানো হয়েছে। এটি বাস্তব পর্যবেক্ষণ বা যাচাইকৃত পূর্বাভাস নয়।`}\nসর্বোচ্চ ঘণ্টাভিত্তিক বৃষ্টি: ${weather.peak.toFixed(1)} মিমি, সময়: ${weather.peak > 0 ? localTime(weather.peakTime) + " (বাংলাদেশ সময়)" : "প্রযোজ্য নয়"}। নির্দেশক ঝুঁকি: ${risk.level}।\n\nউল্লিখিত স্থান সরেজমিনে যাচাই করে প্রয়োজনীয় ব্যবস্থা গ্রহণের অনুরোধ করছি।\n\nবিনীত,\nনাম: __________________\nফোন: __________________\n\n[এটি কেবল একটি ডেমো খসড়া। পাঠানোর আগে বাস্তব তথ্য দিয়ে প্রতিস্থাপন করুন।]`,
+        `বরাবর\n${recipient}\nসংশ্লিষ্ট দপ্তর\nতারিখ: ${localDate()}\n\nবিষয়: জলাবদ্ধতার ঝুঁকি কমাতে নালা পরিদর্শন ও পরিষ্কারের আবেদন।\n\nমহোদয়/মহোদয়া,\n${location.label} এলাকায় (${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}) নমুনা পর্যবেক্ষণে নালার মুখে বর্জ্য এবং রাস্তার পাশে জমে থাকা পানি দেখানো হয়েছে। সমস্যার নমুনা তীব্রতা ৪/৫।\n\n${weather.source === "live" ? `Open-Meteo-এর সরাসরি সংগৃহীত পূর্বাভাস অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা রয়েছে (তথ্য সংগ্রহ: ${localTime(weather.fetchedAt)}, বাংলাদেশ সময়)। এটি পূর্বাভাস, পর্যবেক্ষণ নয়।` : `ডেমো আবহাওয়ার তথ্য অনুযায়ী আগামী ২৪ ঘণ্টায় ${weather.total.toFixed(1)} মিমি বৃষ্টির সম্ভাবনা দেখানো হয়েছে। এটি বাস্তব পর্যবেক্ষণ বা যাচাইকৃত পূর্বাভাস নয়।`}\nসর্বোচ্চ ঘণ্টাভিত্তিক বৃষ্টি: ${weather.peak.toFixed(1)} মিমি, সময়: ${weather.peak > 0 ? localTime(weather.peakTime) + " (বাংলাদেশ সময়)" : "প্রযোজ্য নয়"}। নির্দেশক ঝুঁকি: ${risk.level}।\n\nউল্লিখিত স্থান সরেজমিনে যাচাই করে প্রয়োজনীয় ব্যবস্থা গ্রহণের অনুরোধ করছি।\n\nবিনীত,\nনাম: __________________\nফোন: __________________\n\n[এটি কেবল একটি ডেমো খসড়া। পাঠানোর আগে বাস্তব তথ্য দিয়ে প্রতিস্থাপন করুন।]`,
       );
       setDraftSource("Demo template · not generated by Gemini");
       setDraftLoading(false);
@@ -551,6 +575,10 @@ function App() {
         },
         weather,
         authority: recipient,
+        office:
+          contactEntry?.contacts.find((c) => c.email === recipientEmail)
+            ?.office ||
+          "Relevant corporation department (exact office not confirmed)",
       });
       if (draftVersion.current === version) {
         setDraft(data.text);
@@ -580,18 +608,45 @@ function App() {
     }
   }
   async function shareDraft() {
-    setShareMessage('');
+    setShareMessage("");
     try {
-      if (!await shareText(draft)) { await copyDraft(); setShareMessage('Sharing is not supported here. Copy the draft and send it using your preferred app.'); }
-    } catch (e) { if (e.name !== 'AbortError' && !/cancel/i.test(e.message || '')) setShareMessage('Could not open sharing. Please copy the draft instead.'); }
+      if (!(await shareText(draft))) {
+        await copyDraft();
+        setShareMessage(
+          "Sharing is not supported here. Copy the draft and send it using your preferred app.",
+        );
+      }
+    } catch (e) {
+      if (e.name !== "AbortError" && !/cancel/i.test(e.message || ""))
+        setShareMessage(
+          "Could not open sharing. Please copy the draft instead.",
+        );
+    }
   }
   async function openEmail(e) {
-    if (!emailHref) { e.preventDefault(); setShareMessage('Choose a valid recipient email and confirm the office first.'); return; }
+    if (!emailHref) {
+      e.preventDefault();
+      setShareMessage(
+        "Choose a valid recipient email and confirm the office first.",
+      );
+      return;
+    }
     if (isNative) {
       e.preventDefault();
-      try { await emailNative(recipientEmail, draft); setShareMessage('Email draft opened. Review and send it yourself. This is not a delivery confirmation.'); }
-      catch(error) { setShareMessage(error.message || 'Could not open email. Use Copy or Share instead.'); }
-    } else setShareMessage('Your email app will open a draft if configured. Review the recipient and send it yourself; if nothing opens, use Copy text.');
+      try {
+        await emailNative(recipientEmail, draft);
+        setShareMessage(
+          "Email draft opened. Review and send it yourself. This is not a delivery confirmation.",
+        );
+      } catch (error) {
+        setShareMessage(
+          error.message || "Could not open email. Use Copy or Share instead.",
+        );
+      }
+    } else
+      setShareMessage(
+        "Your email app will open a draft if configured. Review the recipient and send it yourself; if nothing opens, use Copy text.",
+      );
   }
   const progress = [true, !!analysis, !!analysis && !!location, !!risk];
   return (
@@ -600,7 +655,7 @@ function App() {
         <div className="header-inner">
           <a href="#home" className="brand" aria-label="Jolabaddho home">
             <span className="brand-mark">
-              <img src="/logo.svg" alt="" width="48" height="48"/>
+              <img src="/logo.svg" alt="" width="48" height="48" />
             </span>
             <span>
               Jolabaddho<span className="brand-question">?</span>
@@ -621,7 +676,9 @@ function App() {
           </nav>
         </div>
       </header>
-      <div className="settings-bar"><ServiceSettings/></div>
+      <div className="settings-bar">
+        <ServiceSettings />
+      </div>
       <main
         ref={screenRef}
         tabIndex={-1}
@@ -1406,7 +1463,9 @@ function App() {
                   }}
                 >
                   <option>সংশ্লিষ্ট সিটি কর্পোরেশন / পৌরসভা</option>
-                  {authorities.map(entry => <option key={entry.id}>{entry.nameBn}</option>)}
+                  {authorities.map((entry) => (
+                    <option key={entry.id}>{entry.nameBn}</option>
+                  ))}
                   <option value="other">Other / অন্য কর্তৃপক্ষ</option>
                 </select>
               </label>
@@ -1429,7 +1488,22 @@ function App() {
                 sending. We do not infer a ward or provide unverified contact
                 details.
               </p>
-              <ContactPicker entry={contactEntry} email={recipientEmail} setEmail={setRecipientEmail} acknowledged={recipientAcknowledged} setAcknowledged={setRecipientAcknowledged}/>
+              <ContactPicker
+                entry={contactEntry}
+                email={recipientEmail}
+                setEmail={(value) => {
+                  const before = contactEntry?.contacts.find(
+                    (c) => c.email === recipientEmail,
+                  )?.office;
+                  const after = contactEntry?.contacts.find(
+                    (c) => c.email === value,
+                  )?.office;
+                  setRecipientEmail(value);
+                  if (before !== after) clearDraft();
+                }}
+                acknowledged={recipientAcknowledged}
+                setAcknowledged={setRecipientAcknowledged}
+              />
               {!draftSource && (
                 <button
                   className="button primary full draft-button"
@@ -1489,8 +1563,20 @@ function App() {
                       <Share2 size={16} /> Share
                     </button>
                   </div>
-                  <a className="button secondary email-button" href={emailHref || undefined} aria-disabled={!emailHref} onClick={openEmail}><Mail size={16}/> Email</a>
-                  {!emailHref && <p className="micro">Select or enter a valid recipient email and confirm the office above to enable Email.</p>}
+                  <a
+                    className="button secondary email-button"
+                    href={emailHref || undefined}
+                    aria-disabled={!emailHref}
+                    onClick={openEmail}
+                  >
+                    <Mail size={16} /> Email
+                  </a>
+                  {!emailHref && (
+                    <p className="micro">
+                      Select or enter a valid recipient email and confirm the
+                      office above to enable Email.
+                    </p>
+                  )}
 
                   <p className="micro">
                     Review every fact and fill in your name and phone before
@@ -1583,7 +1669,7 @@ function App() {
       <footer>
         <div className="footer-main">
           <a className="footer-brand" href="#home">
-            <img src="/logo.svg" alt="" width="26" height="26"/> Jolabaddho?
+            <img src="/logo.svg" alt="" width="26" height="26" /> Jolabaddho?
           </a>
           <p>Together We Deliver. Together We Thrive. Together We Sustain.</p>
           <span>
@@ -1646,11 +1732,14 @@ function App() {
                 validated flood prediction or official warning.
               </li>
               <li>
-                <strong>Privacy:</strong> No accounts, database, or browser
-                storage. Reports remain in this session until refreshed. Native camera capture may leave temporary device-cache files; this app does not save to your photo gallery. Analyzed
-                photos and draft facts are processed by Google Gemini;
-                coordinates are sent to Open-Meteo. Optional map tiles come from
-                OpenStreetMap. Provider policies apply.
+                <strong>Privacy:</strong> No accounts or report database. Web
+                reports stay in memory. Android saves only the configured
+                backend URL. Reports remain in this session until refreshed.
+                Native camera capture may leave temporary device-cache files;
+                this app does not save to your photo gallery. Analyzed photos
+                and draft facts are processed by Google Gemini; coordinates are
+                sent to Open-Meteo. Optional map tiles come from OpenStreetMap.
+                Provider policies apply.
               </li>
               <li>
                 <strong>Action:</strong> You edit and share the complaint. This

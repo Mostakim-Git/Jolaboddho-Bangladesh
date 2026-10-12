@@ -67,3 +67,7 @@ Suggested accurate caption after real validation:
 > Jolabaddho? — a photo-to-action waterlogging tool. Photograph a visible drainage problem, review a Gemini assessment and live Open-Meteo forecast, and see an indicative code-based risk advisory. Edit a Bangla complaint for the office you verify; you choose how to send it. No government submission is made automatically. SDG 6 · 11 · 13. Together We Deliver, Together We Thrive, Together We Sustain.
 
 Append only hashtags and official-page tags verified against the actual call for entries. Publishing a reel or sending a complaint requires the user's action; this build has done neither.
+
+## Additional implementation update
+
+A source-linked contact directory for all 12 supported corporations and a native Android project have been added. See `CONTACTS.md` and `ANDROID.md`. Nine online photo candidates have been inspected and file-checked, but the live-model accuracy gate above is **still pending**; see `evaluation/STATUS.md`. Neither the contacts nor Android packaging turns the indicative risk thresholds into a validated flood model.

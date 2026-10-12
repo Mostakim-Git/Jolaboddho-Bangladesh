@@ -49,6 +49,9 @@ async function enterDemoComplaint(page) {
     .getByRole("button", { name: "Prepare complaint", exact: true })
     .click();
   await page
+    .getByLabel("Addressed to")
+    .selectOption("ঢাকা উত্তর সিটি কর্পোরেশন");
+  await page
     .getByRole("button", { name: "Create demo complaint", exact: true })
     .click();
 }
@@ -356,10 +359,16 @@ test("copy, share, email preserve the edited Bangla text and do not invent a rec
   await expect(page.getByRole("status")).toContainText(
     "Sharing is not supported here",
   );
+  await expect(page.getByLabel("Recipient email", { exact: true })).toHaveValue(
+    "info@dncc.gov.bd",
+  );
+  await page
+    .getByLabel("I checked the office and jurisdiction.", { exact: false })
+    .check();
   const href = await page
     .getByRole("link", { name: "Email", exact: true })
     .getAttribute("href");
-  expect(href.startsWith("mailto:?")).toBeTruthy();
+  expect(href.startsWith("mailto:info%40dncc.gov.bd?")).toBeTruthy();
   expect(new URLSearchParams(href.split("?")[1]).get("body")).toBe(
     "আমার যাচাইকৃত অভিযোগ",
   );
@@ -460,7 +469,7 @@ test("about modal discloses sources and closes with Escape", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "About & data sources" }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "No accounts, database, or browser storage",
+    "No accounts or report database",
   );
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -500,4 +509,50 @@ test("confident dry-street result is friendly and uses zero photo points", async
     page.getByText("MEDIUM RISK · 4/10", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText(/photo contributes 0 points/)).toBeVisible();
+});
+
+test("recipient directory follows authority, requires confirmation, and source is visible", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await enterDemoComplaint(page);
+  await expect(
+    page.getByRole("link", { name: "View official contact source" }),
+  ).toHaveAttribute("href", /dncc\.gov\.bd/);
+  await expect(page.locator(".email-button")).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await page
+    .getByLabel("I checked the office and jurisdiction.", { exact: false })
+    .check();
+  await expect(page.locator(".email-button")).toHaveAttribute(
+    "href",
+    /^mailto:info%40dncc.gov.bd/,
+  );
+  await page
+    .getByLabel("Recipient email", { exact: true })
+    .fill("bad@example.com\nBcc:other@example.com");
+  await expect(page.getByLabel("Edit your Bangla complaint")).toHaveCount(0);
+  await page.getByLabel("Addressed to").selectOption("সিলেট সিটি কর্পোরেশন");
+  await expect(page.getByLabel("Recipient email", { exact: true })).toHaveValue(
+    "ce@scc.gov.bd",
+  );
+  await expect(
+    page.getByLabel("I checked the office and jurisdiction.", { exact: false }),
+  ).not.toBeChecked();
+});
+
+test("service settings reject unsafe origins without sending photos or keys", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByText("Service settings", { exact: true }).click();
+  await page
+    .getByLabel("Public HTTPS backend origin")
+    .fill("http://localhost:3001");
+  await page.getByRole("button", { name: "Save & check connection" }).click();
+  await expect(page.locator(".service-settings [role=status]")).toContainText(
+    "HTTPS origin",
+  );
 });

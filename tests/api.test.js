@@ -95,3 +95,25 @@ test("malformed JSON produces a friendly error", async () => {
   assert.equal(r.status, 400);
   assert.match((await r.json()).error, /could not be read/);
 });
+
+test("native Android preflight is allowed without wildcard CORS", async () => {
+  const r = await fetch(url + "/api/analyze", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://localhost",
+      "Access-Control-Request-Method": "POST",
+    },
+  });
+  assert.equal(r.status, 204);
+  assert.equal(
+    r.headers.get("access-control-allow-origin"),
+    "https://localhost",
+  );
+});
+test("untrusted cross-origin requests are rejected", async () => {
+  const r = await fetch(url + "/api/health", {
+    headers: { Origin: "https://untrusted.example" },
+  });
+  assert.equal(r.status, 403);
+  assert.equal(r.headers.get("access-control-allow-origin"), null);
+});

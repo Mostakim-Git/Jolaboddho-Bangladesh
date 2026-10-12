@@ -19,6 +19,10 @@ npm run dev
 
 Open the Vite URL on port **5173**. The API runs on **3001**. The dev server proxies `/api` to the backend; browser code never calls a separate localhost backend. The frontend accepts Arena's `.e2b.app` preview hosts and both servers bind to `0.0.0.0`.
 
+**Android app:** native project in `android/`, with build/install/backend instructions in [docs/ANDROID.md](docs/ANDROID.md). Your supplied SVG is used for the website, favicon and Android launcher.
+
+**Official email directory:** all 12 supported city corporations now have source-linked public contacts. See [docs/CONTACTS.md](docs/CONTACTS.md). Publication is verified against official listings; inbox delivery and ward responsibility are not.
+
 **Try demo** works immediately without a key or external network. It uses an original illustrated drainage scene, a fixed sample assessment, an illustrative rainfall series, and a local Bangla letter template. Every sample result is labeled; demo letters are **not** attributed to Gemini. Demo reports are not actual citizen reports. A demo location can also be used to request **real** weather independently of demo report mode.
 
 ### Configuration
@@ -54,9 +58,15 @@ Without a configured key, real AI requests return a friendly setup message. The 
 3. **Location:** browser GPS, manual OpenStreetMap pin, editable coordinates/area name, or a clearly identified Dhaka demo location. Manual coordinate entry works even when map tiles cannot load. Coordinates are restricted to a Bangladesh bounding box (not a precise administrative boundary). GPS requires HTTPS or localhost and permission; denied access has a manual fallback. GPS coordinates are not reverse-geocoded into an invented address. The area name can be edited after any location selection, and the selected coordinates/name appear on Result.
 4. **Forecast:** direct browser request to the live Open-Meteo Forecast API. Aggregates **24 hourly bins beginning at the current hour**, so the first bin includes the already-elapsed portion of that hour. Requests `hourly=precipitation,precipitation_probability`, `daily=precipitation_sum`, `forecast_days=2`, `timezone=Asia/Dhaka`, and Unix timestamps. Daily sums are not substituted for rolling 24-hour totals. Reports total `precipitation`, maximum hourly `precipitation`, maximum hourly `precipitation_probability`, and the first peak rain hour. Zero rain shows no peak hour. Timestamps use `Asia/Dhaka`, regardless of the browser timezone. Source label: **Live data: Open-Meteo, fetched at HH:MM**. Missing, null, incomplete, or discontinuous forecast data is rejected. Refresh fetches new data and invalidates the old complaint.
 5. **Risk:** deterministic JavaScript, shared between frontend and backend. Three factual reasons accompany the LOW / MEDIUM / HIGH badge. Rules are inspectable in the UI.
-6. **Complaint:** Gemini receives only the validated photo assessment, location, selected authority, weather summary (including the peak hour), computed risk, and today’s date in Bangladesh time. It is instructed to distinguish future forecasts from observations, use only known facts, and leave name and phone blank. The citizen can edit, copy, use the system share sheet, or open an Email draft. Email includes no guessed recipient address; a configured mail app is required. The recipient dropdown includes DNCC, DSCC, Chattogram and other cities, plus a custom Other office. The citizen must verify the office. Unsupported sharing has a copy fallback. **Nothing is sent to an authority automatically.**
+6. **Complaint:** Gemini receives only the validated photo assessment, location, selected authority, weather summary (including the peak hour), computed risk, and today’s date in Bangladesh time. It is instructed to distinguish future forecasts from observations, use only known facts, and leave name and phone blank. The citizen can edit, copy, use the system share sheet, or open an Email draft. Email prefills a selected official-source address or a user-entered address only after recipient confirmation; a configured mail app is required. Source links and publication caveats are displayed. The recipient dropdown includes DNCC, DSCC, Chattogram and other cities, plus a custom Other office. The citizen must verify the office. Unsupported sharing has a copy fallback. **Nothing is sent to an authority automatically.**
 
-Changing photo, location, forecast, or recipient invalidates the previous complaint. Stale async responses cannot overwrite newer inputs or a reset/demo report. Refreshing the page clears everything.
+Changing photo, location, forecast, corporation or receiving-office selection invalidates the previous complaint. Email confirmation resets on recipient edits. Stale async responses cannot overwrite newer inputs or a reset/demo report. Refreshing the page clears everything.
+
+## Real-photo evaluation
+
+See [evaluation/STATUS.md](evaluation/STATUS.md). Nine online candidates were visually reviewed, source/hash metadata recorded, and image decoding/resizing checked. **No Gemini photo accuracy was measured in this network-restricted environment.** Candidate labels are provisional and rights are not cleared; the downloaded photos are not committed or packaged. A shared, versioned prompt and `npm run eval:vision` runner now support confusion matrices, per-class recall, timing and held-out evaluation on approved photographs. Prompt edits are not model training or evidence of accuracy gains.
+
+An API key pasted into chat is exposed. Revoke it and configure a fresh key privately on the backend; no key from this conversation has been saved or committed.
 
 ## Risk rules
 
@@ -79,8 +89,8 @@ These are starting thresholds for an indicative advisory, **not a calibrated pre
 
 ## Privacy and safety
 
-- No accounts, database, localStorage, cookies for reports, or saved uploads.
-- Report state exists in browser memory. Request payloads are processed in server memory, not written to disk. API responses use `Cache-Control: no-store`.
+- No accounts, report database, localStorage or cookies for reports, or server-saved uploads. Android saves only the chosen public backend URL in Preferences; native camera capture may leave temporary device cache files.
+- Report state exists in browser/WebView memory. Request payloads are processed in server memory, not written to disk. API responses use `Cache-Control: no-store`.
 - Gemini receives the resized photo for analysis and the relevant textual facts for complaint drafting. Google's provider processing/retention terms apply; “no database” does not promise zero retention by third-party providers.
 - Open-Meteo receives the chosen coordinates. Opening the optional map requests OpenStreetMap tiles and reveals the map's viewed area to that service.
 - English and Bengali fonts are bundled locally; no Google Fonts requests are needed. Illustrations are local SVG artwork.
@@ -126,7 +136,11 @@ src/LocationMap.jsx      Lazy-loaded interactive map
 src/styles.css           Responsive teal/navy design
 shared/risk.js           Deterministic risk and weather calculations
 shared/schema.js         Runtime schemas shared with the API
-server/index.js          Gemini proxy, validation, rate limit, production host
+server/index.js          API validation, CORS, rate limit, production host
+server/gemini.js         Shared versioned Gemini prompt and client
+data/authorities.json    Official-source email directory
+android/                Native Capacitor application and emulator test
+evaluation/             Candidate provenance and honest evaluation status
 tests/                   Unit, API, and Playwright tests
 ```
 

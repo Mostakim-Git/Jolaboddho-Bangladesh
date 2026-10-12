@@ -2953,22 +2953,126 @@ main:not([data-screen="home"]) .analysis-foot {
     padding: 8px;
   }
 }
-.brand-mark{background:white;width:50px;height:50px;border-radius:12px;overflow:hidden;border:1px solid #e1e9df}
-.brand-mark img{width:100%;height:100%;object-fit:contain}
-.settings-bar{max-width:1124px;margin:auto;padding:0 20px}
-.service-settings{margin:12px 0;color:#496f61;font-size:12px}
-.service-settings>summary{cursor:pointer;display:flex;align-items:center;justify-content:flex-end;gap:7px;min-height:36px}
-.service-settings form{max-width:620px;margin:10px 0 15px auto;border:1px solid #d9e5d8;border-radius:12px;background:#fffefa;padding:20px}
-.service-settings form>p{line-height:1.8;margin-bottom:12px}
-.service-settings label,.contact-picker label{display:block;font-size:12px;line-height:1.7;color:#526b59;margin:12px 0}
-.service-settings input,.contact-picker input[type=email]{display:block;width:100%;min-height:46px;border:1px solid #cbdccb;border-radius:7px;padding:11px;color:#264e42;background:white;margin-top:7px}
-.contact-picker{border:1px solid #dbe7d7;background:#f4f8ef;border-radius:10px;padding:17px;margin:18px 0}
-.contact-picker h3{font-size:14px;display:flex;align-items:center;gap:7px}
-.contact-picker>p[lang]{font-size:11px;color:#6e8369;margin-top:6px}
-.contact-picker select{font-family:'DM Sans Variable','Noto Sans Bengali',sans-serif;font-size:12px}
-.contact-source{font-size:10px;color:#6a7e62;line-height:1.8}
-.source-link{display:inline-flex;gap:6px;align-items:center;color:#087d73;text-decoration:underline;font-size:11px;min-height:42px}
-.contact-picker .recipient-confirm{display:flex;align-items:flex-start;gap:9px;font-size:11px;cursor:pointer}
-.recipient-confirm input{flex-shrink:0;width:18px;height:18px;accent-color:#087d73;margin-top:2px}
-.email-button[aria-disabled=true]{opacity:.55;cursor:not-allowed}
-@supports(padding:max(0px)){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
+.brand-mark {
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e1e9df;
+}
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.settings-bar {
+  max-width: 1124px;
+  margin: auto;
+  padding: 0 20px;
+}
+.service-settings {
+  margin: 12px 0;
+  color: #496f61;
+  font-size: 12px;
+}
+.service-settings > summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-height: 36px;
+}
+.service-settings form {
+  max-width: 620px;
+  margin: 10px 0 15px auto;
+  border: 1px solid #d9e5d8;
+  border-radius: 12px;
+  background: #fffefa;
+  padding: 20px;
+}
+.service-settings form > p {
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+.service-settings label,
+.contact-picker label {
+  display: block;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #526b59;
+  margin: 12px 0;
+}
+.service-settings input,
+.contact-picker input[type="email"] {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #cbdccb;
+  border-radius: 7px;
+  padding: 11px;
+  color: #264e42;
+  background: white;
+  margin-top: 7px;
+}
+.contact-picker {
+  border: 1px solid #dbe7d7;
+  background: #f4f8ef;
+  border-radius: 10px;
+  padding: 17px;
+  margin: 18px 0;
+}
+.contact-picker h3 {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.contact-picker > p[lang] {
+  font-size: 11px;
+  color: #6e8369;
+  margin-top: 6px;
+}
+.contact-picker select {
+  font-family: "DM Sans Variable", "Noto Sans Bengali", sans-serif;
+  font-size: 12px;
+}
+.contact-source {
+  font-size: 10px;
+  color: #6a7e62;
+  line-height: 1.8;
+}
+.source-link {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: #087d73;
+  text-decoration: underline;
+  font-size: 11px;
+  min-height: 42px;
+}
+.contact-picker .recipient-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.recipient-confirm input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #087d73;
+  margin-top: 2px;
+}
+.email-button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+@supports (padding: max(0px)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

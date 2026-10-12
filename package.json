@@ -12,7 +12,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "android:sync": "npm run icons && npm run build && cap sync android",
     "android:open": "cap open android",
-    "android:debug": "npm run android:sync && cd android && ./gradlew assembleDebug"
+    "android:debug": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "eval:vision": "node --env-file-if-exists=.env scripts/evaluate-vision.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.9",
