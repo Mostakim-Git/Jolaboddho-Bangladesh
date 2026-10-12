@@ -6,6 +6,12 @@ A mobile-first citizen tool for reporting waterlogging in Bangladeshi cities. Tu
 
 Supports SDG **6** (Clean Water and Sanitation), **11** (Sustainable Cities and Communities), and **13** (Climate Action). This is an independent citizen tool, not a government reporting portal or official flood-warning system.
 
+## Download and verification
+
+[Download the Android test APK (ZIP)](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912/artifacts/11740379282) · [Successful Android build + emulator test](https://github.com/Mostakim-Git/Jolaboddho-Bangladesh/actions/runs/38235729912) · [Exact verification and pending gates](docs/VERIFICATION.md)
+
+The APK is debug-signed and the artifact expires 11 November 2026. Unzip and install `app-debug.apk`. **Live Gemini features require your deployed HTTPS backend and a fresh private key**; this is not a ready-to-use hosted production service.
+
 ## Run locally
 
 Requires **Node.js 22.9+** and npm.
